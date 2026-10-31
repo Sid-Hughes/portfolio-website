@@ -17,7 +17,7 @@ const statuses = Object.entries(statusLabels)
   <div class="container-page pb-24">
     <FilterBar tags={uniqueTags(projects)} statuses={statuses} />
     <div data-filter-list class="grid gap-6 md:grid-cols-2" data-reveal>
-      {projects.map((project) => <ProjectCard project={project} />)}
+      {projects.map((project) => <ProjectCard project={project} headingLevel={2} />)}
     </div>
     {projects.length === 0 && <p class="text-muted">No projects yet.</p>}
   </div>

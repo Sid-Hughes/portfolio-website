@@ -1,6 +1,7 @@
 ---
 // Client-side filter for a list of [data-filter-item] elements inside [data-filter-list].
-// Without JS the bar stays hidden and every item shows.
+// Without JS the bar stays hidden and every item shows. With JS its space is reserved from first paint
+// (via html[data-js]), so the grid doesn't jump when the script runs.
 interface Props {
   tags: string[];
   statuses?: { value: string; label: string }[];
@@ -11,7 +12,7 @@ const chip =
   'rounded-full border border-border px-3 py-1.5 text-sm text-muted hover:border-fg hover:text-fg aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-accent-fg';
 ---
 
-<div data-filter-bar hidden class="mb-10 flex flex-col gap-4">
+<div data-filter-bar class="filter-bar mb-10 flex-col gap-4">
   {statuses.length > 0 && (
     <label class="flex items-center gap-3 text-sm text-muted">
       Status
@@ -31,6 +32,15 @@ const chip =
   )}
   <p data-filter-empty hidden class="text-muted">Nothing matches those filters.</p>
 </div>
+
+<style>
+  .filter-bar {
+    display: none;
+  }
+  :global(html[data-js]) .filter-bar {
+    display: flex;
+  }
+</style>
 
 <script>
   import { onPageLoad } from '../lib/lifecycle';
@@ -74,7 +84,6 @@ const chip =
         }),
       );
       statusSelect?.addEventListener('change', apply);
-      bar.hidden = false;
       apply();
     });
   });

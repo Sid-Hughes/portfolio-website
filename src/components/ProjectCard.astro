@@ -6,10 +6,13 @@ import { statusLabels, type Project } from '../lib/content';
 
 interface Props {
   project: Project;
+  /** Heading level for the title: h2 on list pages, h3 under a section heading. */
+  headingLevel?: 2 | 3;
   class?: string;
 }
 
-const { project, class: className } = Astro.props;
+const { project, class: className, headingLevel = 3 } = Astro.props;
+const Heading = `h${headingLevel}` as const;
 const { title, summary, cover, coverAlt, status, tags } = project.data;
 ---
 
@@ -30,12 +33,12 @@ const { title, summary, cover, coverAlt, status, tags } = project.data;
         <span class:list={['h-2 w-2 rounded-full', status === 'in-progress' ? 'bg-accent' : 'bg-muted']} aria-hidden="true"></span>
         {statusLabels[status]}
       </p>
-      <h3 class="text-h3 font-semibold">
+      <Heading class="text-h3 font-semibold">
         <!-- Depth goes on the inner span: a transform on the heading would trap the stretched link's ::after. -->
         <a href={`/projects/${project.id}`} class="after:absolute after:inset-0 group-hover:text-accent">
           <span class="inline-block" data-tilt-depth="50">{title}</span>
         </a>
-      </h3>
+      </Heading>
       <p class="text-muted">{summary}</p>
       {tags.length > 0 && (
         <ul class="mt-auto flex flex-wrap gap-2 pt-3" aria-label="Tags">
