@@ -1,0 +1,22 @@
+---
+interface Props {
+  id: string;
+  title: string;
+  eyebrow?: string;
+  link?: { href: string; label: string };
+}
+
+const { id, title, eyebrow, link } = Astro.props;
+---
+
+<div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    {eyebrow && <p class="mb-2 text-sm font-medium uppercase tracking-widest text-accent">{eyebrow}</p>}
+    <h2 id={id} class="text-h2 font-semibold">{title}</h2>
+  </div>
+  {link && (
+    <a href={link.href} class="text-sm text-muted hover:text-fg">
+      {link.label} <span aria-hidden="true">→</span>
+    </a>
+  )}
+</div>

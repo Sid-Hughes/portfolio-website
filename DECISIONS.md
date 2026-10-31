@@ -34,3 +34,13 @@ Choices not covered by the plan, with a one-line reason each.
 - **Table of contents shows h2/h3 and only when a post has at least two.** A one-item contents list adds nothing.
 - **Drafts show in dev (with a "Draft" badge) and are excluded from production builds, RSS and related-post lists.**
 - **"Get in touch" links to the social links section on `/about`.** There is no contact form.
+- **Projects and Blog page intros are settings fields (`projectsIntro`, `blogIntro`).** Keeps page copy in the CMS rather than hard-coded.
+
+## Design system
+- **Fonts: Space Grotesk (headings) and Inter (body), self-hosted via Fontsource.** Two typefaces as the plan asks; self-hosting avoids a third-party request and layout shift from Google Fonts. Placeholder until Sid picks a style.
+- **Placeholder palette: warm neutrals (stone) with an indigo accent.** All text pairs pass WCAG AA in both themes (muted text ≥ 6.9:1, accent ≥ 6:1). Change the values in `src/styles/tokens.css`.
+- **Tokens are CSS variables in `tokens.css`, exposed to Tailwind through `@theme inline`.** Utilities like `bg-surface`, `text-muted` and `text-accent` switch with the theme, so components don't need `dark:` variants.
+- **Theme: stored choice, else the OS preference, applied by an inline script before first paint.** Avoids a flash of the wrong theme; without JS the site follows the OS and the toggle stays hidden.
+- **Fluid type scale with `clamp()`.** One scale that works from 360px phones to desktop without breakpoints.
+- **Whole-card click targets.** The card title's link stretches over the card, so the full card is clickable while keeping a single link per card for screen readers.
+- **The hero has a static radial-gradient backdrop in the accent colour.** Looks finished without animation and doubles as the shader hero's fallback in Phase 4.

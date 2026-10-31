@@ -1,4 +1,5 @@
 ---
+import Tag from './Tag.astro';
 import { formatDate, readingTime, type Post } from '../lib/content';
 
 interface Props {
@@ -9,19 +10,28 @@ const { post } = Astro.props;
 const { title, excerpt, publishedDate, tags, draft } = post.data;
 ---
 
-<article class="flex flex-col gap-1 border-b border-neutral-200 py-4" data-filter-item data-tags={JSON.stringify(tags)}>
-  <p class="text-sm text-neutral-500">
+<article
+  class="group relative grid gap-2 border-t border-border py-8 sm:grid-cols-[10rem_1fr] sm:gap-8"
+  data-filter-item
+  data-tags={JSON.stringify(tags)}
+>
+  <p class="text-sm text-muted">
     <time datetime={publishedDate.toISOString()}>{formatDate(publishedDate)}</time>
-    · {readingTime(post.body)}
-    {draft && <span class="ml-2 rounded bg-amber-100 px-2 text-amber-900">Draft</span>}
+    <span class="sm:block">
+      <span class="sm:hidden" aria-hidden="true">·</span>
+      {readingTime(post.body)}
+    </span>
   </p>
-  <h3 class="text-lg font-semibold">
-    <a href={`/blog/${post.id}`} class="hover:underline">{title}</a>
-  </h3>
-  <p class="text-neutral-700">{excerpt}</p>
-  {tags.length > 0 && (
-    <ul class="flex flex-wrap gap-2 pt-1 text-xs" aria-label="Tags">
-      {tags.map((tag) => <li class="rounded bg-neutral-100 px-2 py-1">{tag}</li>)}
-    </ul>
-  )}
+  <div class="flex flex-col gap-2">
+    <h3 class="text-h3 font-semibold">
+      <a href={`/blog/${post.id}`} class="after:absolute after:inset-0 group-hover:text-accent">{title}</a>
+      {draft && <span class="ml-2 rounded-full bg-accent-soft px-2 py-0.5 align-middle font-sans text-xs font-medium text-accent">Draft</span>}
+    </h3>
+    <p class="max-w-prose text-muted">{excerpt}</p>
+    {tags.length > 0 && (
+      <ul class="flex flex-wrap gap-2 pt-2" aria-label="Tags">
+        {tags.map((tag) => <li><Tag>{tag}</Tag></li>)}
+      </ul>
+    )}
+  </div>
 </article>

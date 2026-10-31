@@ -2,6 +2,9 @@
 import { Image } from 'astro:assets';
 import { render } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Prose from '../components/Prose.astro';
+import Button from '../components/Button.astro';
+import SectionHeading from '../components/SectionHeading.astro';
 import { getAbout } from '../lib/content';
 
 const about = await getAbout();
@@ -10,35 +13,55 @@ const { Content } = await render(about);
 ---
 
 <BaseLayout title="About" description={shortBio}>
-  <section class="flex flex-col gap-8 py-8 sm:flex-row sm:items-start">
-    {headshot && (
-      <Image src={headshot} alt={headshotAlt ?? ''} width={240} height={240} class="h-40 w-40 rounded-full object-cover sm:h-60 sm:w-60" />
-    )}
+  <section class="container-page grid gap-12 pt-16 pb-16 sm:pt-24 md:grid-cols-[1fr_18rem] md:gap-16">
     <div>
-      <h1 class="text-3xl font-bold">{name}</h1>
-      {role && <p class="mt-1 text-lg text-neutral-600">{role}</p>}
-      <div class="prose mt-6 max-w-none">
-        <Content />
-      </div>
-      {cvLink && <p class="mt-6"><a href={cvLink} class="underline">Download my CV</a></p>}
+      {role && <p class="mb-4 text-sm font-medium uppercase tracking-widest text-accent">{role}</p>}
+      <h1 class="text-h1 font-semibold">{name}</h1>
+      <p class="mt-5 max-w-2xl text-lead text-muted">{shortBio}</p>
+      <Prose class="mt-10"><Content /></Prose>
+      {cvLink && (
+        <div class="mt-10">
+          <Button href={cvLink} variant="secondary">Download my CV</Button>
+        </div>
+      )}
     </div>
+    {headshot && (
+      <Image
+        src={headshot}
+        alt={headshotAlt ?? ''}
+        widths={[288, 576]}
+        sizes="288px"
+        class="aspect-square w-48 rounded-card border border-border object-cover md:order-last md:w-full"
+        loading="eager"
+      />
+    )}
   </section>
 
   {skills.length > 0 && (
-    <section class="py-8" aria-labelledby="skills-heading">
-      <h2 id="skills-heading" class="mb-4 text-2xl font-semibold">Skills</h2>
-      <ul class="flex flex-wrap gap-2">
-        {skills.map((skill) => <li class="rounded bg-neutral-100 px-3 py-1">{skill}</li>)}
-      </ul>
+    <section class="section-space border-t border-border" aria-labelledby="skills-heading">
+      <div class="container-page">
+        <SectionHeading id="skills-heading" title="Skills" />
+        <ul class="flex flex-wrap gap-3">
+          {skills.map((skill) => <li class="rounded-full border border-border bg-surface px-4 py-2">{skill}</li>)}
+        </ul>
+      </div>
     </section>
   )}
 
   {socials.length > 0 && (
-    <section class="py-8" id="contact" aria-labelledby="contact-heading">
-      <h2 id="contact-heading" class="mb-4 text-2xl font-semibold">Get in touch</h2>
-      <ul class="flex flex-wrap gap-4">
-        {socials.map((social) => <li><a href={social.url} class="underline" rel="me noopener">{social.label}</a></li>)}
-      </ul>
+    <section id="contact" class="section-space scroll-mt-16 border-t border-border" aria-labelledby="contact-heading">
+      <div class="container-page">
+        <SectionHeading id="contact-heading" title="Get in touch" />
+        <ul class="flex flex-wrap gap-3">
+          {socials.map((social) => (
+            <li>
+              <Button href={social.url} variant="secondary" rel="me noopener">
+                {social.label} <span aria-hidden="true">↗</span>
+              </Button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   )}
 </BaseLayout>

@@ -2,6 +2,8 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ProjectCard from '../components/ProjectCard.astro';
 import PostCard from '../components/PostCard.astro';
+import Button from '../components/Button.astro';
+import SectionHeading from '../components/SectionHeading.astro';
 import { getAbout, getPosts, getProjects, getSettings } from '../lib/content';
 
 const settings = await getSettings();
@@ -11,36 +13,55 @@ const latestPosts = (await getPosts()).slice(0, 3);
 ---
 
 <BaseLayout>
-  <section class="py-16">
-    <h1 class="text-4xl font-bold sm:text-5xl">{settings.siteTitle}</h1>
-    {settings.tagline && <p class="mt-4 max-w-2xl text-xl text-neutral-700">{settings.tagline}</p>}
-    <div class="mt-8 flex flex-wrap gap-4">
-      <a href="/projects" class="rounded bg-neutral-900 px-4 py-2 text-white">View my work</a>
-      <a href="/about#contact" class="rounded border border-neutral-300 px-4 py-2">Get in touch</a>
+  <section class="relative isolate overflow-hidden border-b border-border">
+    <div class="hero-backdrop absolute inset-0 -z-10" aria-hidden="true"></div>
+    <div class="container-page flex min-h-[80svh] flex-col justify-center py-24">
+      {about.data.role && <p class="mb-6 text-sm font-medium uppercase tracking-widest text-accent">{about.data.role}</p>}
+      <h1 class="max-w-4xl text-display font-semibold">{settings.siteTitle}</h1>
+      {settings.tagline && <p class="mt-6 max-w-2xl text-lead text-muted">{settings.tagline}</p>}
+      <div class="mt-10 flex flex-wrap gap-3">
+        <Button href="/projects">View my work</Button>
+        <Button href="/about#contact" variant="secondary">Get in touch</Button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-space">
+    <div class="container-page">
+      <p class="max-w-4xl font-display text-h2 font-medium">{about.data.shortBio}</p>
+      <a href="/about" class="mt-6 inline-block text-sm text-muted hover:text-fg">More about me <span aria-hidden="true">→</span></a>
     </div>
   </section>
 
   {featured.length > 0 && (
-    <section class="py-8" aria-labelledby="featured-heading">
-      <h2 id="featured-heading" class="mb-6 text-2xl font-semibold">Selected work</h2>
-      <div class="grid gap-6 sm:grid-cols-2">
-        {featured.map((project) => <ProjectCard project={project} />)}
+    <section class="section-space border-t border-border" aria-labelledby="featured-heading">
+      <div class="container-page">
+        <SectionHeading id="featured-heading" eyebrow="Projects" title="Selected work" link={{ href: '/projects', label: 'All projects' }} />
+        <div class="grid gap-6 md:grid-cols-2">
+          {featured.map((project) => <ProjectCard project={project} />)}
+        </div>
       </div>
-      <p class="mt-6"><a href="/projects" class="underline">All projects →</a></p>
     </section>
   )}
 
   {latestPosts.length > 0 && (
-    <section class="py-8" aria-labelledby="posts-heading">
-      <h2 id="posts-heading" class="mb-2 text-2xl font-semibold">Latest writing</h2>
-      {latestPosts.map((post) => <PostCard post={post} />)}
-      <p class="mt-6"><a href="/blog" class="underline">All posts →</a></p>
+    <section class="section-space border-t border-border" aria-labelledby="posts-heading">
+      <div class="container-page">
+        <SectionHeading id="posts-heading" eyebrow="Blog" title="Latest writing" link={{ href: '/blog', label: 'All posts' }} />
+        <div class="border-b border-border">
+          {latestPosts.map((post) => <PostCard post={post} />)}
+        </div>
+      </div>
     </section>
   )}
-
-  <section class="py-8" aria-labelledby="about-heading">
-    <h2 id="about-heading" class="mb-2 text-2xl font-semibold">About</h2>
-    <p class="max-w-2xl text-neutral-700">{about.data.shortBio}</p>
-    <p class="mt-4"><a href="/about" class="underline">More about me →</a></p>
-  </section>
 </BaseLayout>
+
+<style>
+  /* Static backdrop; also the fallback for the Phase 4 shader hero. */
+  .hero-backdrop {
+    background:
+      radial-gradient(60% 80% at 85% 20%, color-mix(in oklab, var(--accent) 22%, transparent), transparent 70%),
+      radial-gradient(50% 60% at 10% 90%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 70%),
+      var(--bg);
+  }
+</style>

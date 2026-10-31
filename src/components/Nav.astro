@@ -1,0 +1,35 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+
+interface Props {
+  siteTitle: string;
+  links: { label: string; href: string }[];
+}
+
+const { siteTitle, links } = Astro.props;
+const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
+const isCurrent = (href: string) =>
+  href === '/' ? currentPath === '/' : currentPath === href || currentPath.startsWith(`${href}/`);
+---
+
+<header class="sticky top-0 z-40 border-b border-border bg-bg/85 backdrop-blur">
+  <nav class="container-page flex h-16 items-center justify-between gap-4" aria-label="Main">
+    <a href="/" class="font-display text-lg font-semibold tracking-tight">{siteTitle}</a>
+    <div class="flex items-center gap-1 sm:gap-4">
+      <ul class="flex items-center gap-1 sm:gap-2">
+        {links.map((link) => (
+          <li>
+            <a
+              href={link.href}
+              aria-current={isCurrent(link.href) ? 'page' : undefined}
+              class="rounded-full px-2 py-2 text-sm text-muted hover:text-fg aria-[current=page]:text-fg aria-[current=page]:underline aria-[current=page]:decoration-accent aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-8 sm:px-3"
+            >
+              {link.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+      <ThemeToggle />
+    </div>
+  </nav>
+</header>

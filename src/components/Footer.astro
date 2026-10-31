@@ -1,0 +1,20 @@
+---
+interface Props {
+  text?: string | null;
+  socials: { label: string; url: string }[];
+}
+
+const { text, socials } = Astro.props;
+---
+
+<footer class="mt-auto border-t border-border">
+  <div class="container-page flex flex-col gap-4 py-10 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
+    {text && <p>{text}</p>}
+    <ul class="flex flex-wrap gap-x-5 gap-y-2">
+      {socials.map((social) => (
+        <li><a href={social.url} class="hover:text-fg" rel="me noopener">{social.label}</a></li>
+      ))}
+      <li><a href="/rss.xml" class="hover:text-fg">RSS</a></li>
+    </ul>
+  </div>
+</footer>
