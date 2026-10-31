@@ -24,10 +24,12 @@ const imageField = (label: string, dir: string, required: boolean) =>
     validation: { isRequired: required },
   });
 
+// For optional images. Keystatic can't make a field conditionally required, so the Astro schema
+// enforces it: an image without a description fails the build (and the PR's preview deploy).
 const altField = (label = 'Image description (alt text)') =>
   fields.text({
     label,
-    description: 'Describe the image for people using screen readers.',
+    description: 'Required if you add the image above. Describe it for people using screen readers.',
   });
 
 // Content components insertable in rich text. Each one mirrors a tag in markdoc.config.mjs.

@@ -17,7 +17,7 @@ const { title, summary, cover, coverAlt, status, tags } = project.data;
 ---
 
 <TiltCard class={className} data-filter-item data-tags={JSON.stringify(tags)} data-status={status}>
-  <article class="group relative flex h-full flex-col rounded-card border border-border bg-surface hover:border-fg/30">
+  <article class="group relative flex h-full flex-col rounded-card border border-border bg-surface hover:border-fg/30 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-4 has-[a:focus-visible]:outline-accent">
     <!-- No overflow-hidden on the card: it would flatten the 3D layers. The cover clips itself. -->
     <div class="overflow-hidden rounded-t-card" data-tilt-depth="30">
       <Image
