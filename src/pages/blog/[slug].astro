@@ -23,7 +23,7 @@ const toc = headings.filter((heading) => heading.depth === 2 || heading.depth ==
 const showToc = toc.length > 1;
 ---
 
-<BaseLayout title={title} description={excerpt}>
+<BaseLayout title={title} description={excerpt} ogImage={`/og/blog/${post.id}.png`} type="article" publishedTime={publishedDate}>
   <ReadingProgress />
   <article data-reading-target>
     <header class="container-page pt-16 pb-10 sm:pt-24">

@@ -48,9 +48,39 @@ In production Keystatic runs in **GitHub mode**: editors sign in with GitHub and
 6. In the GitHub App's settings (GitHub → Settings → Developer settings → GitHub Apps → Edit), check the **Redirect URLs** include `https://<your-production-domain>/api/keystatic/github/oauth/callback`. Keystatic usually adds it during setup.
 7. Remove `PUBLIC_KEYSTATIC_STORAGE` from your local `.env` to go back to local mode. Never commit `.env`.
 
-If you add a custom domain later, add a second redirect URL for it; the existing app and env vars stay the same.
+### 3. Web Analytics
 
-## Adding content in production
+The site already includes Vercel Web Analytics. Turn it on in Vercel → Project → **Analytics** → Enable. Until then, the analytics script returns a 404 (harmless, but it shows as a console error).
+
+### 4. Custom domain (optional)
+
+1. Vercel → Project → Settings → **Domains** → add the domain and follow the DNS instructions. Make it the primary domain so the `.vercel.app` address redirects to it.
+2. Change `site` in `astro.config.mjs` to the new domain. Canonical URLs, the sitemap, RSS and Open Graph images all use it.
+3. Add a redirect URL to the Keystatic GitHub App: `https://<your-domain>/api/keystatic/github/oauth/callback`. Keep the existing one.
+
+## How to add content
+
+All content is edited in the CMS at `/keystatic`. No code changes are needed.
+
+### Where things are
+
+| In the CMS | What it controls |
+|---|---|
+| **Projects** | Project cards and project pages. Tick **Featured** to show one in the homepage's "Selected work" strip. **Sort order** puts lower numbers first. |
+| **Posts** | Blog posts. Tick **Draft** to hide one from the live site (drafts still show locally, with a badge). **Related projects** links a post to projects; the project pages list those posts automatically. |
+| **About** | Your name, role, short bio (homepage), full bio, headshot, CV link, skills and social links. Social links also appear in the footer and the "Get in touch" section. |
+| **Site settings** | Site title, tagline, description (search engines and RSS), navigation links, Projects and Blog page intros, footer text. |
+
+### Tips
+
+- **Images:** every image needs a description (alt text) for screen readers. Project covers require one; for optional images, the build fails if an image has no description, so the PR preview will flag it before it goes live.
+- **Pipeline diagrams:** in a project or post body, use the editor's **+** menu → **Pipeline diagram**. Add steps in order, each with a short label (about 18 characters) and a colour. It draws itself when scrolled into view.
+- **Stats:** a project's **Stats** show as numbers that count up on its page. Use **Suffix** for things like `%` or `k+`.
+- **Social preview images** for each page are generated automatically from the title and summary. There's nothing to upload.
+
+### Publishing
+
+Use the CMS at the **production domain** (`https://portfolio-website-six-gilt-38.vercel.app/keystatic`, or the custom domain once added). Per-deployment and PR preview URLs change on every deploy, so GitHub sign-in is not registered for them and fails with a `redirect_uri` error.
 
 Use the CMS at the **production domain** (`https://portfolio-website-six-gilt-38.vercel.app/keystatic`, or the custom domain once added). Per-deployment and PR preview URLs change on every deploy, so GitHub sign-in is not registered for them and fails with a `redirect_uri` error.
 
