@@ -39,24 +39,33 @@ const { class: className, ...rest } = Astro.props;
 
     document.querySelectorAll<HTMLElement>('[data-tilt]').forEach((card) => {
       const layers = [...card.querySelectorAll<HTMLElement>('[data-tilt-depth]')];
-      const rotateX = gsap.quickTo(card, 'rotationX', { duration: 0.5, ease: 'power3.out' });
-      const rotateY = gsap.quickTo(card, 'rotationY', { duration: 0.5, ease: 'power3.out' });
-
-      const enter = () => {
+      // quickTo setters are created per hover. The ease-back on leave overwrites (kills) them,
+      // so reusing one setter across hovers would leave the card frozen after the first leave.
+      let tilt: { x: gsap.QuickToFunc; y: gsap.QuickToFunc } | null = null;
+      const startTilt = () => {
+        gsap.killTweensOf(card);
+        tilt = {
+          x: gsap.quickTo(card, 'rotationX', { duration: 0.5, ease: 'power3.out' }),
+          y: gsap.quickTo(card, 'rotationY', { duration: 0.5, ease: 'power3.out' }),
+        };
         layers.forEach((layer) =>
-          gsap.to(layer, { z: Number(layer.dataset.tiltDepth), duration: 0.5, ease: 'power3.out' }),
+          gsap.to(layer, { z: Number(layer.dataset.tiltDepth), duration: 0.5, ease: 'power3.out', overwrite: true }),
         );
       };
+
       const move = (event: PointerEvent) => {
+        if (!tilt) startTilt(); // e.g. the pointer was already over the card when the page loaded
         const rect = card.getBoundingClientRect();
         const x = (event.clientX - rect.left) / rect.width - 0.5;
         const y = (event.clientY - rect.top) / rect.height - 0.5;
-        rotateY(x * 2 * MAX_TILT);
-        rotateX(-y * 2 * MAX_TILT);
+        tilt!.y(x * 2 * MAX_TILT);
+        tilt!.x(-y * 2 * MAX_TILT);
       };
+      const enter = startTilt;
       const leave = () => {
+        tilt = null;
         gsap.to(card, { rotationX: 0, rotationY: 0, duration: 0.8, ease: 'power3.out', overwrite: true });
-        gsap.to(layers, { z: 0, duration: 0.8, ease: 'power3.out' });
+        gsap.to(layers, { z: 0, duration: 0.8, ease: 'power3.out', overwrite: true });
       };
 
       card.addEventListener('pointerenter', enter);

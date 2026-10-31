@@ -19,21 +19,36 @@
     const removers: (() => void)[] = [];
 
     document.querySelectorAll<HTMLElement>('[data-magnetic]').forEach((el) => {
-      const xTo = gsap.quickTo(el, 'x', { duration: 0.4, ease: 'power3.out' });
-      const yTo = gsap.quickTo(el, 'y', { duration: 0.4, ease: 'power3.out' });
+      // quickTo setters are created per hover. The spring-back on leave overwrites (kills) them,
+      // so reusing one setter across hovers would leave the button stuck after the first leave.
+      let pull: { x: gsap.QuickToFunc; y: gsap.QuickToFunc } | null = null;
+      const startPull = () => {
+        gsap.killTweensOf(el);
+        pull = {
+          x: gsap.quickTo(el, 'x', { duration: 0.4, ease: 'power3.out' }),
+          y: gsap.quickTo(el, 'y', { duration: 0.4, ease: 'power3.out' }),
+        };
+      };
 
       const move = (event: PointerEvent) => {
+        if (!pull) startPull();
+        // Measure from the button's resting centre, not where it has drifted to.
         const rect = el.getBoundingClientRect();
-        xTo((event.clientX - (rect.left + rect.width / 2)) * PULL_X);
-        yTo((event.clientY - (rect.top + rect.height / 2)) * PULL_Y);
+        const centreX = rect.left + rect.width / 2 - Number(gsap.getProperty(el, 'x'));
+        const centreY = rect.top + rect.height / 2 - Number(gsap.getProperty(el, 'y'));
+        pull!.x((event.clientX - centreX) * PULL_X);
+        pull!.y((event.clientY - centreY) * PULL_Y);
       };
       const leave = () => {
+        pull = null;
         gsap.to(el, { x: 0, y: 0, duration: 0.9, ease: 'elastic.out(1, 0.4)', overwrite: true });
       };
 
+      el.addEventListener('pointerenter', startPull);
       el.addEventListener('pointermove', move);
       el.addEventListener('pointerleave', leave);
       removers.push(() => {
+        el.removeEventListener('pointerenter', startPull);
         el.removeEventListener('pointermove', move);
         el.removeEventListener('pointerleave', leave);
         gsap.killTweensOf(el);
