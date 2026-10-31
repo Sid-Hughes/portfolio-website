@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
+import FilterBar from '../../components/FilterBar.astro';
+import { getProjects, statusLabels, uniqueTags } from '../../lib/content';
+
+const projects = await getProjects();
+const statuses = Object.entries(statusLabels)
+  .filter(([value]) => projects.some((project) => project.data.status === value))
+  .map(([value, label]) => ({ value, label }));
+---
+
+<BaseLayout title="Projects" description="Things I'm working on and have built.">
+  <h1 class="py-8 text-3xl font-bold">Projects</h1>
+  <div>
+    <FilterBar tags={uniqueTags(projects)} statuses={statuses} />
+    <div data-filter-list class="grid gap-6 sm:grid-cols-2">
+      {projects.map((project) => <ProjectCard project={project} />)}
+    </div>
+  </div>
+  {projects.length === 0 && <p class="text-neutral-600">No projects yet.</p>}
+</BaseLayout>

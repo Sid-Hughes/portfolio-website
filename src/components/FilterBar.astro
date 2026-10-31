@@ -1,0 +1,83 @@
+---
+// Client-side filter for a list of [data-filter-item] elements inside [data-filter-list].
+// Without JS the bar stays hidden and every item shows.
+interface Props {
+  tags: string[];
+  statuses?: { value: string; label: string }[];
+}
+
+const { tags, statuses = [] } = Astro.props;
+---
+
+<div data-filter-bar hidden class="mb-6 flex flex-col gap-3">
+  {statuses.length > 0 && (
+    <label class="flex items-center gap-2 text-sm">
+      Status
+      <select data-filter-status class="rounded border border-neutral-300 px-2 py-1">
+        <option value="">All</option>
+        {statuses.map((status) => <option value={status.value}>{status.label}</option>)}
+      </select>
+    </label>
+  )}
+  {tags.length > 0 && (
+    <div role="group" aria-label="Filter by tag" class="flex flex-wrap gap-2 text-sm">
+      <button type="button" data-filter-tag="" aria-pressed="true" class="rounded border border-neutral-300 px-2 py-1 aria-pressed:bg-neutral-900 aria-pressed:text-white">
+        All
+      </button>
+      {tags.map((tag) => (
+        <button type="button" data-filter-tag={tag} aria-pressed="false" class="rounded border border-neutral-300 px-2 py-1 aria-pressed:bg-neutral-900 aria-pressed:text-white">
+          {tag}
+        </button>
+      ))}
+    </div>
+  )}
+  <p data-filter-empty hidden class="text-neutral-600">Nothing matches those filters.</p>
+</div>
+
+<script>
+  function initFilters() {
+    document.querySelectorAll<HTMLElement>('[data-filter-bar]').forEach((bar) => {
+      const list = bar.parentElement?.querySelector<HTMLElement>('[data-filter-list]');
+      if (!list) return;
+      const items = [...list.querySelectorAll<HTMLElement>('[data-filter-item]')];
+      const tagButtons = [...bar.querySelectorAll<HTMLButtonElement>('[data-filter-tag]')];
+      const statusSelect = bar.querySelector<HTMLSelectElement>('[data-filter-status]');
+      const empty = bar.querySelector<HTMLElement>('[data-filter-empty]');
+
+      const params = new URLSearchParams(location.search);
+      let tag = params.get('tag') ?? '';
+      if (!tagButtons.some((button) => button.dataset.filterTag === tag)) tag = '';
+      if (statusSelect) statusSelect.value = params.get('status') ?? '';
+
+      const apply = () => {
+        const status = statusSelect?.value ?? '';
+        let visible = 0;
+        for (const item of items) {
+          const tags: string[] = JSON.parse(item.dataset.tags ?? '[]');
+          const show = (!tag || tags.includes(tag)) && (!status || item.dataset.status === status);
+          item.hidden = !show;
+          if (show) visible++;
+        }
+        tagButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.filterTag === tag)));
+        if (empty) empty.hidden = visible > 0;
+
+        const url = new URL(location.href);
+        tag ? url.searchParams.set('tag', tag) : url.searchParams.delete('tag');
+        status ? url.searchParams.set('status', status) : url.searchParams.delete('status');
+        history.replaceState(history.state, '', url);
+      };
+
+      tagButtons.forEach((button) =>
+        button.addEventListener('click', () => {
+          tag = button.dataset.filterTag ?? '';
+          apply();
+        }),
+      );
+      statusSelect?.addEventListener('change', apply);
+      bar.hidden = false;
+      apply();
+    });
+  }
+
+  initFilters();
+</script>

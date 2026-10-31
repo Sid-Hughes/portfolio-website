@@ -1,0 +1,75 @@
+---
+import { Image } from 'astro:assets';
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import { formatMonth, getPostsForProject, getProjects, statusLabels, type Project } from '../../lib/content';
+
+export async function getStaticPaths() {
+  const projects = await getProjects();
+  return projects.map((project) => ({ params: { slug: project.id }, props: { project } }));
+}
+
+const { project } = Astro.props as { project: Project };
+const { title, summary, cover, coverAlt, status, tags, links, startDate, endDate, stats } = project.data;
+const { Content } = await render(project);
+const relatedPosts = await getPostsForProject(project.id);
+
+const linkList = [
+  { label: 'GitHub', href: links.github },
+  { label: 'Live demo', href: links.demo },
+  { label: 'Link', href: links.other },
+].filter((link): link is { label: string; href: string } => !!link.href);
+
+const dates = startDate
+  ? `${formatMonth(startDate)} – ${endDate ? formatMonth(endDate) : 'present'}`
+  : null;
+---
+
+<BaseLayout title={title} description={summary}>
+  <article class="py-8">
+    <p class="text-sm text-neutral-500">
+      {statusLabels[status]}{dates && <> · {dates}</>}
+    </p>
+    <h1 class="mt-2 text-3xl font-bold sm:text-4xl">{title}</h1>
+    <p class="mt-4 max-w-2xl text-lg text-neutral-700">{summary}</p>
+
+    {tags.length > 0 && (
+      <ul class="mt-4 flex flex-wrap gap-2 text-xs" aria-label="Tags">
+        {tags.map((tag) => (
+          <li><a href={`/projects?tag=${encodeURIComponent(tag)}`} class="rounded bg-neutral-100 px-2 py-1 hover:underline">{tag}</a></li>
+        ))}
+      </ul>
+    )}
+
+    {linkList.length > 0 && (
+      <ul class="mt-4 flex flex-wrap gap-4">
+        {linkList.map((link) => <li><a href={link.href} class="underline" rel="noopener">{link.label} ↗</a></li>)}
+      </ul>
+    )}
+
+    <Image src={cover} alt={coverAlt} widths={[640, 1280, 1920]} sizes="(min-width: 896px) 896px, 100vw" class="mt-8 w-full rounded" loading="eager" />
+
+    {stats.length > 0 && (
+      <dl class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        {stats.map((stat) => (
+          <div class="rounded border border-neutral-200 p-4">
+            <dt class="text-sm text-neutral-500">{stat.label}</dt>
+            <dd class="text-2xl font-semibold">{stat.value}{stat.suffix}</dd>
+          </div>
+        ))}
+      </dl>
+    )}
+
+    <div class="prose mt-8 max-w-none">
+      <Content />
+    </div>
+  </article>
+
+  {relatedPosts.length > 0 && (
+    <section class="border-t border-neutral-200 py-8" aria-labelledby="related-posts">
+      <h2 id="related-posts" class="text-2xl font-semibold">Posts about this project</h2>
+      {relatedPosts.map((post) => <PostCard post={post} />)}
+    </section>
+  )}
+</BaseLayout>

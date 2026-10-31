@@ -1,25 +1,68 @@
 ---
-import { getCollection, render } from 'astro:content';
-import '../../styles/global.css';
+import { Image } from 'astro:assets';
+import { getEntries, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
+import { formatDate, getPosts, readingTime, type Post } from '../../lib/content';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('posts');
+  const posts = await getPosts();
   return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
 }
 
-const { post } = Astro.props;
-const { Content } = await render(post);
+const { post } = Astro.props as { post: Post };
+const { title, excerpt, publishedDate, tags, cover, coverAlt, draft, relatedProjects } = post.data;
+const { Content, headings } = await render(post);
+const projects = await getEntries(relatedProjects);
+const toc = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>{post.data.title}</title>
-  </head>
-  <body class="mx-auto max-w-2xl p-6 font-sans">
-    <a class="underline" href="/">← Home</a>
-    <h1 class="mt-4 text-3xl font-bold">{post.data.title}</h1>
-    <article class="mt-6"><Content /></article>
-  </body>
-</html>
+<BaseLayout title={title} description={excerpt}>
+  <article class="py-8">
+    <p class="text-sm text-neutral-500">
+      <time datetime={publishedDate.toISOString()}>{formatDate(publishedDate)}</time>
+      · {readingTime(post.body)}
+      {draft && <span class="ml-2 rounded bg-amber-100 px-2 text-amber-900">Draft</span>}
+    </p>
+    <h1 class="mt-2 text-3xl font-bold sm:text-4xl">{title}</h1>
+    <p class="mt-4 max-w-2xl text-lg text-neutral-700">{excerpt}</p>
+
+    {tags.length > 0 && (
+      <ul class="mt-4 flex flex-wrap gap-2 text-xs" aria-label="Tags">
+        {tags.map((tag) => (
+          <li><a href={`/blog?tag=${encodeURIComponent(tag)}`} class="rounded bg-neutral-100 px-2 py-1 hover:underline">{tag}</a></li>
+        ))}
+      </ul>
+    )}
+
+    {cover && (
+      <Image src={cover} alt={coverAlt ?? ''} widths={[640, 1280, 1920]} sizes="(min-width: 896px) 896px, 100vw" class="mt-8 w-full rounded" loading="eager" />
+    )}
+
+    {toc.length > 1 && (
+      <nav class="mt-8 rounded border border-neutral-200 p-4" aria-labelledby="toc-heading">
+        <h2 id="toc-heading" class="text-sm font-semibold uppercase tracking-wide text-neutral-500">Contents</h2>
+        <ol class="mt-2 flex flex-col gap-1">
+          {toc.map((heading) => (
+            <li class={heading.depth === 3 ? 'pl-4' : ''}>
+              <a href={`#${heading.slug}`} class="hover:underline">{heading.text}</a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+    )}
+
+    <div class="prose mt-8 max-w-none">
+      <Content />
+    </div>
+  </article>
+
+  {projects.length > 0 && (
+    <section class="border-t border-neutral-200 py-8" aria-labelledby="related-projects">
+      <h2 id="related-projects" class="mb-6 text-2xl font-semibold">Related projects</h2>
+      <div class="grid gap-6 sm:grid-cols-2">
+        {projects.map((project) => <ProjectCard project={project} />)}
+      </div>
+    </section>
+  )}
+</BaseLayout>
