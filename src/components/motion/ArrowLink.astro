@@ -1,0 +1,42 @@
+---
+// Link with a trailing arrow that nudges right on hover.
+import type { HTMLAttributes } from 'astro/types';
+
+interface Props extends HTMLAttributes<'a'> {
+  href: string;
+  direction?: 'forward' | 'back' | 'external';
+}
+
+const { href, direction = 'forward', class: className, ...rest } = Astro.props;
+const arrow = { forward: '→', back: '←', external: '↗' }[direction];
+---
+
+<a href={href} class:list={['arrow-link group inline-flex items-center gap-1.5', className]} data-direction={direction} {...rest}>
+  {direction === 'back' && <span class="arrow" aria-hidden="true">{arrow}</span>}
+  <slot />
+  {direction !== 'back' && <span class="arrow" aria-hidden="true">{arrow}</span>}
+</a>
+
+<style>
+  .arrow {
+    display: inline-block;
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .arrow-link:hover .arrow,
+  .arrow-link:focus-visible .arrow {
+    transform: translateX(4px);
+  }
+  .arrow-link[data-direction='back']:hover .arrow,
+  .arrow-link[data-direction='back']:focus-visible .arrow {
+    transform: translateX(-4px);
+  }
+  .arrow-link[data-direction='external']:hover .arrow,
+  .arrow-link[data-direction='external']:focus-visible .arrow {
+    transform: translate(3px, -3px);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .arrow {
+      transition: none;
+    }
+  }
+</style>

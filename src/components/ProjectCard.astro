@@ -1,44 +1,47 @@
 ---
 import { Image } from 'astro:assets';
 import Tag from './Tag.astro';
+import TiltCard from './motion/TiltCard.astro';
 import { statusLabels, type Project } from '../lib/content';
 
 interface Props {
   project: Project;
+  class?: string;
 }
 
-const { project } = Astro.props;
+const { project, class: className } = Astro.props;
 const { title, summary, cover, coverAlt, status, tags } = project.data;
 ---
 
-<article
-  class="group relative flex h-full flex-col overflow-hidden rounded-card border border-border bg-surface hover:border-fg/30"
-  data-filter-item
-  data-tags={JSON.stringify(tags)}
-  data-status={status}
->
-  <div class="overflow-hidden">
-    <Image
-      src={cover}
-      alt={coverAlt}
-      widths={[480, 960]}
-      sizes="(min-width: 1024px) 540px, (min-width: 640px) 50vw, 100vw"
-      class="aspect-video w-full object-cover"
-    />
-  </div>
-  <div class="flex flex-1 flex-col gap-3 p-6">
-    <p class="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted">
-      <span class:list={['h-2 w-2 rounded-full', status === 'in-progress' ? 'bg-accent' : 'bg-muted']} aria-hidden="true"></span>
-      {statusLabels[status]}
-    </p>
-    <h3 class="text-h3 font-semibold">
-      <a href={`/projects/${project.id}`} class="after:absolute after:inset-0 group-hover:text-accent">{title}</a>
-    </h3>
-    <p class="text-muted">{summary}</p>
-    {tags.length > 0 && (
-      <ul class="mt-auto flex flex-wrap gap-2 pt-3" aria-label="Tags">
-        {tags.map((tag) => <li><Tag>{tag}</Tag></li>)}
-      </ul>
-    )}
-  </div>
-</article>
+<TiltCard class={className} data-filter-item data-tags={JSON.stringify(tags)} data-status={status}>
+  <article class="group relative flex h-full flex-col rounded-card border border-border bg-surface hover:border-fg/30">
+    <!-- No overflow-hidden on the card: it would flatten the 3D layers. The cover clips itself. -->
+    <div class="overflow-hidden rounded-t-card" data-tilt-depth="30">
+      <Image
+        src={cover}
+        alt={coverAlt}
+        widths={[480, 960]}
+        sizes="(min-width: 1024px) 540px, (min-width: 640px) 50vw, 100vw"
+        class="aspect-video w-full object-cover"
+      />
+    </div>
+    <div class="flex flex-1 flex-col gap-3 p-6">
+      <p class="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted">
+        <span class:list={['h-2 w-2 rounded-full', status === 'in-progress' ? 'bg-accent' : 'bg-muted']} aria-hidden="true"></span>
+        {statusLabels[status]}
+      </p>
+      <h3 class="text-h3 font-semibold">
+        <!-- Depth goes on the inner span: a transform on the heading would trap the stretched link's ::after. -->
+        <a href={`/projects/${project.id}`} class="after:absolute after:inset-0 group-hover:text-accent">
+          <span class="inline-block" data-tilt-depth="50">{title}</span>
+        </a>
+      </h3>
+      <p class="text-muted">{summary}</p>
+      {tags.length > 0 && (
+        <ul class="mt-auto flex flex-wrap gap-2 pt-3" aria-label="Tags">
+          {tags.map((tag) => <li><Tag>{tag}</Tag></li>)}
+        </ul>
+      )}
+    </div>
+  </article>
+</TiltCard>
