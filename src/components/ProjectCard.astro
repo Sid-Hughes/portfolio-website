@@ -1,5 +1,6 @@
 ---
 import { Image } from 'astro:assets';
+import Tag from './Tag.astro';
 import { statusLabels, type Project } from '../lib/content';
 
 interface Props {
@@ -11,21 +12,32 @@ const { title, summary, cover, coverAlt, status, tags } = project.data;
 ---
 
 <article
-  class="flex flex-col overflow-hidden rounded border border-neutral-200"
+  class="group relative flex h-full flex-col overflow-hidden rounded-card border border-border bg-surface hover:border-fg/30"
   data-filter-item
   data-tags={JSON.stringify(tags)}
   data-status={status}
 >
-  <Image src={cover} alt={coverAlt} widths={[400, 800]} sizes="(min-width: 640px) 400px, 100vw" class="aspect-video w-full object-cover" />
-  <div class="flex flex-1 flex-col gap-2 p-4">
-    <p class="text-xs uppercase tracking-wide text-neutral-500">{statusLabels[status]}</p>
-    <h3 class="text-lg font-semibold">
-      <a href={`/projects/${project.id}`} class="hover:underline">{title}</a>
+  <div class="overflow-hidden">
+    <Image
+      src={cover}
+      alt={coverAlt}
+      widths={[480, 960]}
+      sizes="(min-width: 1024px) 540px, (min-width: 640px) 50vw, 100vw"
+      class="aspect-video w-full object-cover"
+    />
+  </div>
+  <div class="flex flex-1 flex-col gap-3 p-6">
+    <p class="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-muted">
+      <span class:list={['h-2 w-2 rounded-full', status === 'in-progress' ? 'bg-accent' : 'bg-muted']} aria-hidden="true"></span>
+      {statusLabels[status]}
+    </p>
+    <h3 class="text-h3 font-semibold">
+      <a href={`/projects/${project.id}`} class="after:absolute after:inset-0 group-hover:text-accent">{title}</a>
     </h3>
-    <p class="text-neutral-700">{summary}</p>
+    <p class="text-muted">{summary}</p>
     {tags.length > 0 && (
-      <ul class="mt-auto flex flex-wrap gap-2 pt-2 text-xs" aria-label="Tags">
-        {tags.map((tag) => <li class="rounded bg-neutral-100 px-2 py-1">{tag}</li>)}
+      <ul class="mt-auto flex flex-wrap gap-2 pt-3" aria-label="Tags">
+        {tags.map((tag) => <li><Tag>{tag}</Tag></li>)}
       </ul>
     )}
   </div>

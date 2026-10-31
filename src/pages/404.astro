@@ -1,11 +1,15 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/Button.astro';
 ---
 
 <BaseLayout title="Page not found">
-  <section class="py-16">
-    <h1 class="text-3xl font-bold">Page not found</h1>
-    <p class="mt-4 text-neutral-700">That page doesn't exist, or it has moved.</p>
-    <p class="mt-6"><a href="/" class="underline">Back to the homepage</a></p>
+  <section class="container-page flex min-h-[60svh] flex-col items-start justify-center py-24">
+    <p class="font-display text-display font-semibold text-accent">404</p>
+    <h1 class="mt-4 text-h2 font-semibold">Page not found</h1>
+    <p class="mt-4 text-lead text-muted">That page doesn't exist, or it has moved.</p>
+    <div class="mt-10">
+      <Button href="/">Back to the homepage</Button>
+    </div>
   </section>
 </BaseLayout>

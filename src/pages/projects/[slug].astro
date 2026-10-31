@@ -3,6 +3,10 @@ import { Image } from 'astro:assets';
 import { render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PostCard from '../../components/PostCard.astro';
+import Prose from '../../components/Prose.astro';
+import Tag from '../../components/Tag.astro';
+import Button from '../../components/Button.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
 import { formatMonth, getPostsForProject, getProjects, statusLabels, type Project } from '../../lib/content';
 
 export async function getStaticPaths() {
@@ -16,9 +20,9 @@ const { Content } = await render(project);
 const relatedPosts = await getPostsForProject(project.id);
 
 const linkList = [
-  { label: 'GitHub', href: links.github },
+  { label: 'View on GitHub', href: links.github },
   { label: 'Live demo', href: links.demo },
-  { label: 'Link', href: links.other },
+  { label: 'More', href: links.other },
 ].filter((link): link is { label: string; href: string } => !!link.href);
 
 const dates = startDate
@@ -27,49 +31,68 @@ const dates = startDate
 ---
 
 <BaseLayout title={title} description={summary}>
-  <article class="py-8">
-    <p class="text-sm text-neutral-500">
-      {statusLabels[status]}{dates && <> · {dates}</>}
-    </p>
-    <h1 class="mt-2 text-3xl font-bold sm:text-4xl">{title}</h1>
-    <p class="mt-4 max-w-2xl text-lg text-neutral-700">{summary}</p>
+  <article>
+    <header class="container-page pt-16 pb-10 sm:pt-24">
+      <a href="/projects" class="text-sm text-muted hover:text-fg"><span aria-hidden="true">←</span> All projects</a>
+      <p class="mt-8 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-medium uppercase tracking-widest text-accent">
+        <span>{statusLabels[status]}</span>
+        {dates && <span class="text-muted">{dates}</span>}
+      </p>
+      <h1 class="mt-4 max-w-4xl text-h1 font-semibold">{title}</h1>
+      <p class="mt-5 max-w-2xl text-lead text-muted">{summary}</p>
+      {tags.length > 0 && (
+        <ul class="mt-6 flex flex-wrap gap-2" aria-label="Tags">
+          {tags.map((tag) => <li><Tag href={`/projects?tag=${encodeURIComponent(tag)}`}>{tag}</Tag></li>)}
+        </ul>
+      )}
+      {linkList.length > 0 && (
+        <div class="mt-8 flex flex-wrap gap-3">
+          {linkList.map((link, i) => (
+            <Button href={link.href} variant={i === 0 ? 'primary' : 'secondary'} rel="noopener">
+              {link.label} <span aria-hidden="true">↗</span>
+            </Button>
+          ))}
+        </div>
+      )}
+    </header>
 
-    {tags.length > 0 && (
-      <ul class="mt-4 flex flex-wrap gap-2 text-xs" aria-label="Tags">
-        {tags.map((tag) => (
-          <li><a href={`/projects?tag=${encodeURIComponent(tag)}`} class="rounded bg-neutral-100 px-2 py-1 hover:underline">{tag}</a></li>
-        ))}
-      </ul>
-    )}
-
-    {linkList.length > 0 && (
-      <ul class="mt-4 flex flex-wrap gap-4">
-        {linkList.map((link) => <li><a href={link.href} class="underline" rel="noopener">{link.label} ↗</a></li>)}
-      </ul>
-    )}
-
-    <Image src={cover} alt={coverAlt} widths={[640, 1280, 1920]} sizes="(min-width: 896px) 896px, 100vw" class="mt-8 w-full rounded" loading="eager" />
+    <div class="container-page">
+      <Image
+        src={cover}
+        alt={coverAlt}
+        widths={[640, 1280, 1920]}
+        sizes="(min-width: 1152px) 1088px, 100vw"
+        class="w-full rounded-card border border-border"
+        loading="eager"
+      />
+    </div>
 
     {stats.length > 0 && (
-      <dl class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {stats.map((stat) => (
-          <div class="rounded border border-neutral-200 p-4">
-            <dt class="text-sm text-neutral-500">{stat.label}</dt>
-            <dd class="text-2xl font-semibold">{stat.value}{stat.suffix}</dd>
-          </div>
-        ))}
-      </dl>
+      <div class="container-page mt-12">
+        <dl class="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border sm:grid-cols-4">
+          {stats.map((stat) => (
+            <div class="flex flex-col-reverse gap-1 bg-surface p-6">
+              <dt class="text-sm text-muted">{stat.label}</dt>
+              <dd class="font-display text-h2 font-semibold">{stat.value}{stat.suffix}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
     )}
 
-    <div class="prose mt-8 max-w-none">
-      <Content />
+    <div class="container-page py-16">
+      <Prose class="mx-auto"><Content /></Prose>
     </div>
   </article>
 
   {relatedPosts.length > 0 && (
-    <section class="border-t border-neutral-200 py-8" aria-labelledby="related-posts">
-      <h2 id="related-posts" class="text-2xl font-semibold">Posts about this project</h2>
-      {relatedPosts.map((post) => <PostCard post={post} />)}
+    <section class="section-space border-t border-border" aria-labelledby="related-posts">
+      <div class="container-page">
+        <SectionHeading id="related-posts" eyebrow="Blog" title="Posts about this project" />
+        <div class="border-b border-border">
+          {relatedPosts.map((post) => <PostCard post={post} />)}
+        </div>
+      </div>
     </section>
   )}
 </BaseLayout>
