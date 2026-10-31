@@ -22,7 +22,7 @@
 </style>
 
 <script>
-  import { onPageLoad, prefersReducedMotion } from '../../lib/lifecycle';
+  import { onPageLoad, prefersReducedMotion, whenIdle } from '../../lib/lifecycle';
 
   const VERTEX = `
     attribute vec2 position;
@@ -89,6 +89,21 @@
   onPageLoad(() => {
     const canvas = document.querySelector<HTMLCanvasElement>('[data-liquid-hero]');
     if (!canvas || prefersReducedMotion()) return;
+
+    // Compiling shaders blocks the main thread, so wait until the page is idle.
+    // The CSS gradient shows until then.
+    let stop: (() => void) | undefined;
+    let cancelled = false;
+    whenIdle().then(() => {
+      if (!cancelled) stop = start(canvas);
+    });
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
+  });
+
+  function start(canvas: HTMLCanvasElement): (() => void) | undefined {
     const gl = canvas.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'low-power' });
     if (!gl) return;
 
@@ -201,5 +216,5 @@
       window.removeEventListener('pointermove', onPointerMove);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
-  });
+  }
 </script>
