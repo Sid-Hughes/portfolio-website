@@ -33,7 +33,9 @@ const chip =
 </div>
 
 <script>
-  function initFilters() {
+  import { onPageLoad } from '../lib/lifecycle';
+
+  onPageLoad(() => {
     document.querySelectorAll<HTMLElement>('[data-filter-bar]').forEach((bar) => {
       const list = bar.parentElement?.querySelector<HTMLElement>('[data-filter-list]');
       if (!list) return;
@@ -75,7 +77,5 @@ const chip =
       bar.hidden = false;
       apply();
     });
-  }
-
-  initFilters();
+  });
 </script>

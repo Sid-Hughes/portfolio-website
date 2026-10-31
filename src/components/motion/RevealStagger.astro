@@ -1,0 +1,31 @@
+---
+// Data-attribute driven scroll reveal, included once in the layout.
+// Mark a container with data-reveal; its children fade and slide up with a stagger as it enters the viewport.
+// Optional: data-reveal-delay="0.2" (seconds), data-reveal-self to animate the container itself instead.
+// Content is visible by default; the hidden start state is only applied by JS, and never under reduced motion.
+---
+
+<script>
+  import { gsap } from '../../lib/gsap';
+  import { onPageLoad, prefersReducedMotion } from '../../lib/lifecycle';
+
+  onPageLoad(() => {
+    if (prefersReducedMotion()) return;
+    const ctx = gsap.context(() => {
+      document.querySelectorAll<HTMLElement>('[data-reveal]').forEach((container) => {
+        const targets = container.hasAttribute('data-reveal-self') ? [container] : [...container.children];
+        if (targets.length === 0) return;
+        gsap.from(targets, {
+          opacity: 0,
+          y: 30,
+          duration: 0.8,
+          ease: 'power3.out',
+          stagger: 0.08,
+          delay: Number(container.dataset.revealDelay ?? 0),
+          scrollTrigger: { trigger: container, start: 'top 85%', once: true },
+        });
+      });
+    });
+    return () => ctx.revert();
+  });
+</script>

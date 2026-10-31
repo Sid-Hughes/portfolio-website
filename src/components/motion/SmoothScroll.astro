@@ -1,0 +1,43 @@
+---
+// Global Lenis smooth scroll, driven by GSAP's ticker so ScrollTrigger stays in sync.
+// Skipped entirely under prefers-reduced-motion (native scrolling).
+---
+
+<script>
+  import Lenis from 'lenis';
+  import { gsap, ScrollTrigger } from '../../lib/gsap';
+  import { prefersReducedMotion } from '../../lib/lifecycle';
+
+  let lenis: Lenis | null = null;
+
+  function start() {
+    if (lenis || prefersReducedMotion()) return;
+    lenis = new Lenis({ anchors: { offset: -88 } });
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add(raf);
+    gsap.ticker.lagSmoothing(0);
+  }
+
+  function stop() {
+    if (!lenis) return;
+    gsap.ticker.remove(raf);
+    lenis.destroy();
+    lenis = null;
+  }
+
+  function raf(time: number) {
+    lenis?.raf(time * 1000);
+  }
+
+  // The window persists across View Transitions, so Lenis is created once.
+  // After each swap it re-measures the new page, and ScrollTrigger recalculates positions.
+  document.addEventListener('astro:page-load', () => {
+    start();
+    lenis?.resize();
+    ScrollTrigger.refresh();
+  });
+
+  matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (event) =>
+    event.matches ? stop() : start(),
+  );
+</script>

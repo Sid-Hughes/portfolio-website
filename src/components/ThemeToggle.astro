@@ -19,7 +19,9 @@
 </button>
 
 <script>
-  function initThemeToggle() {
+  import { onPageLoad } from '../lib/lifecycle';
+
+  onPageLoad(() => {
     const root = document.documentElement;
     document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((button) => {
       const label = () => {
@@ -37,7 +39,5 @@
       label();
       button.hidden = false;
     });
-  }
-
-  initThemeToggle();
+  });
 </script>
