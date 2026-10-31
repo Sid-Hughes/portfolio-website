@@ -1,0 +1,69 @@
+---
+// Project stats whose numbers ease up from 0 once in view.
+// The final values are server-rendered, so they show as-is under reduced motion or without JS.
+interface Props {
+  stats: { label: string; value: number; suffix?: string | null }[];
+}
+
+const { stats } = Astro.props;
+const decimalsOf = (value: number) => (Number.isInteger(value) ? 0 : (String(value).split('.')[1]?.length ?? 0));
+const format = (value: number, decimals: number) =>
+  value.toLocaleString('en-GB', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+---
+
+<dl data-count-stats class="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-border bg-border sm:grid-cols-4">
+  {stats.map((stat) => {
+    const decimals = decimalsOf(stat.value);
+    return (
+      <div class="flex flex-col-reverse gap-1 bg-surface p-6">
+        <dt class="text-sm text-muted">{stat.label}</dt>
+        <dd class="font-display text-h2 font-semibold tabular-nums">
+          <span data-count-to={stat.value} data-decimals={decimals}>{format(stat.value, decimals)}</span>{stat.suffix}
+        </dd>
+      </div>
+    );
+  })}
+</dl>
+
+<script>
+  import { gsap } from '../../lib/gsap';
+  import { onPageLoad, prefersReducedMotion } from '../../lib/lifecycle';
+
+  onPageLoad(() => {
+    if (prefersReducedMotion()) return;
+    const restores: (() => void)[] = [];
+    const ctx = gsap.context(() => {
+      document.querySelectorAll<HTMLElement>('[data-count-to]').forEach((el) => {
+        const target = Number(el.dataset.countTo);
+        const decimals = Number(el.dataset.decimals ?? 0);
+        const final = el.textContent;
+        const counter = { value: 0 };
+        const render = () => {
+          el.textContent = counter.value.toLocaleString('en-GB', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals,
+          });
+        };
+        render();
+        gsap.to(counter, {
+          value: target,
+          duration: 1.6,
+          ease: 'power2.out',
+          onUpdate: render,
+          onComplete: () => {
+            el.textContent = final;
+          },
+          scrollTrigger: { trigger: el, start: 'top 90%', once: true },
+        });
+        restores.push(() => {
+          el.textContent = final;
+        });
+      });
+    });
+    // On navigation, kill the tweens and put the server-rendered values back.
+    return () => {
+      ctx.revert();
+      restores.forEach((restore) => restore());
+    };
+  });
+</script>

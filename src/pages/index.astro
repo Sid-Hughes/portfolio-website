@@ -1,9 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import ProjectCard from '../components/ProjectCard.astro';
 import PostCard from '../components/PostCard.astro';
 import Button from '../components/Button.astro';
 import SectionHeading from '../components/SectionHeading.astro';
+import ArrowLink from '../components/motion/ArrowLink.astro';
+import LiquidShaderHero from '../components/motion/LiquidShaderHero.astro';
+import MagneticButton from '../components/motion/MagneticButton.astro';
+import PinnedHorizontalStrip from '../components/motion/PinnedHorizontalStrip.astro';
+import WordFill from '../components/motion/WordFill.astro';
 import { getAbout, getPosts, getProjects, getSettings } from '../lib/content';
 
 const settings = await getSettings();
@@ -14,54 +18,37 @@ const latestPosts = (await getPosts()).slice(0, 3);
 
 <BaseLayout>
   <section class="relative isolate overflow-hidden border-b border-border">
-    <div class="hero-backdrop absolute inset-0 -z-10" aria-hidden="true"></div>
+    <LiquidShaderHero />
     <div class="container-page flex min-h-[80svh] flex-col justify-center py-24">
       {about.data.role && <p class="mb-6 text-sm font-medium uppercase tracking-widest text-accent">{about.data.role}</p>}
       <h1 class="max-w-4xl text-display font-semibold">{settings.siteTitle}</h1>
-      {settings.tagline && <p class="mt-6 max-w-2xl text-lead text-muted">{settings.tagline}</p>}
-      <div class="mt-10 flex flex-wrap gap-3">
-        <Button href="/projects">View my work</Button>
-        <Button href="/about#contact" variant="secondary">Get in touch</Button>
+      <div data-reveal data-reveal-delay="0.15">
+        {settings.tagline && <p class="mt-6 max-w-2xl text-lead text-muted">{settings.tagline}</p>}
+        <div class="mt-10 flex flex-wrap gap-3">
+          <MagneticButton><Button href="/projects">View my work</Button></MagneticButton>
+          <MagneticButton><Button href="/about#contact" variant="secondary">Get in touch</Button></MagneticButton>
+        </div>
       </div>
     </div>
   </section>
 
   <section class="section-space">
     <div class="container-page">
-      <p class="max-w-4xl font-display text-h2 font-medium">{about.data.shortBio}</p>
-      <a href="/about" class="mt-6 inline-block text-sm text-muted hover:text-fg">More about me <span aria-hidden="true">→</span></a>
+      <WordFill text={about.data.shortBio} class="max-w-4xl font-display text-h2 font-medium" />
+      <ArrowLink href="/about" class="mt-6 text-sm text-muted hover:text-fg">More about me</ArrowLink>
     </div>
   </section>
 
-  {featured.length > 0 && (
-    <section class="section-space border-t border-border" aria-labelledby="featured-heading">
-      <div class="container-page">
-        <SectionHeading id="featured-heading" eyebrow="Projects" title="Selected work" link={{ href: '/projects', label: 'All projects' }} />
-        <div class="grid gap-6 md:grid-cols-2">
-          {featured.map((project) => <ProjectCard project={project} />)}
-        </div>
-      </div>
-    </section>
-  )}
+  {featured.length > 0 && <PinnedHorizontalStrip projects={featured} />}
 
   {latestPosts.length > 0 && (
     <section class="section-space border-t border-border" aria-labelledby="posts-heading">
       <div class="container-page">
         <SectionHeading id="posts-heading" eyebrow="Blog" title="Latest writing" link={{ href: '/blog', label: 'All posts' }} />
-        <div class="border-b border-border">
+        <div class="border-b border-border" data-reveal>
           {latestPosts.map((post) => <PostCard post={post} />)}
         </div>
       </div>
     </section>
   )}
 </BaseLayout>
-
-<style>
-  /* Static backdrop; also the fallback for the Phase 4 shader hero. */
-  .hero-backdrop {
-    background:
-      radial-gradient(60% 80% at 85% 20%, color-mix(in oklab, var(--accent) 22%, transparent), transparent 70%),
-      radial-gradient(50% 60% at 10% 90%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 70%),
-      var(--bg);
-  }
-</style>

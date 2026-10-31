@@ -1,0 +1,46 @@
+---
+// Wraps a call-to-action so it drifts toward the cursor and springs back on leave.
+// Fine pointers only; static under reduced motion or on touch.
+---
+
+<span data-magnetic class="inline-block">
+  <slot />
+</span>
+
+<script>
+  import { gsap } from '../../lib/gsap';
+  import { hasFinePointer, onPageLoad, prefersReducedMotion } from '../../lib/lifecycle';
+
+  const PULL_X = 0.35;
+  const PULL_Y = 0.5;
+
+  onPageLoad(() => {
+    if (prefersReducedMotion() || !hasFinePointer()) return;
+    const removers: (() => void)[] = [];
+
+    document.querySelectorAll<HTMLElement>('[data-magnetic]').forEach((el) => {
+      const xTo = gsap.quickTo(el, 'x', { duration: 0.4, ease: 'power3.out' });
+      const yTo = gsap.quickTo(el, 'y', { duration: 0.4, ease: 'power3.out' });
+
+      const move = (event: PointerEvent) => {
+        const rect = el.getBoundingClientRect();
+        xTo((event.clientX - (rect.left + rect.width / 2)) * PULL_X);
+        yTo((event.clientY - (rect.top + rect.height / 2)) * PULL_Y);
+      };
+      const leave = () => {
+        gsap.to(el, { x: 0, y: 0, duration: 0.9, ease: 'elastic.out(1, 0.4)', overwrite: true });
+      };
+
+      el.addEventListener('pointermove', move);
+      el.addEventListener('pointerleave', leave);
+      removers.push(() => {
+        el.removeEventListener('pointermove', move);
+        el.removeEventListener('pointerleave', leave);
+        gsap.killTweensOf(el);
+        gsap.set(el, { clearProps: 'transform' });
+      });
+    });
+
+    return () => removers.forEach((remove) => remove());
+  });
+</script>

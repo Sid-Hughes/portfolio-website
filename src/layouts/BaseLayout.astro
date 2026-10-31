@@ -1,8 +1,11 @@
 ---
+import { ClientRouter } from 'astro:transitions';
 import { getAbout, getSettings } from '../lib/content';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import ThemeScript from '../components/ThemeScript.astro';
+import SmoothScroll from '../components/motion/SmoothScroll.astro';
+import RevealStagger from '../components/motion/RevealStagger.astro';
 import '../styles/global.css';
 
 interface Props {
@@ -26,6 +29,7 @@ const pageTitle = title ? `${title} | ${settings.siteTitle}` : settings.siteTitl
     <link rel="alternate" type="application/rss+xml" title={settings.siteTitle} href="/rss.xml" />
     <title>{pageTitle}</title>
     {description && <meta name="description" content={description} />}
+    <ClientRouter />
   </head>
   <body class="flex min-h-screen flex-col">
     <a
@@ -39,5 +43,7 @@ const pageTitle = title ? `${title} | ${settings.siteTitle}` : settings.siteTitl
       <slot />
     </main>
     <Footer text={settings.footerText} socials={about.data.socials} />
+    <SmoothScroll />
+    <RevealStagger />
   </body>
 </html>

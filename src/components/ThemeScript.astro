@@ -1,17 +1,27 @@
 ---
-// Sets data-theme before first paint so there's no flash of the wrong theme.
+// Sets data-theme (and data-js) before first paint so there's no flash of the wrong theme.
 // Uses the stored choice, falling back to the OS preference.
+// View Transitions replace <html>'s attributes on every navigation, so it's reapplied after each swap.
 ---
 
 <script is:inline>
   (() => {
-    let theme = null;
-    try {
-      theme = localStorage.getItem('theme');
-    } catch {}
-    if (theme !== 'light' && theme !== 'dark') {
-      theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const apply = (doc) => {
+      let theme = null;
+      try {
+        theme = localStorage.getItem('theme');
+      } catch {}
+      if (theme !== 'light' && theme !== 'dark') {
+        theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      doc.documentElement.dataset.theme = theme;
+      // Lets CSS reserve space for JS-only UI (e.g. filter bars) before first paint.
+      doc.documentElement.dataset.js = '';
+    };
+    apply(document);
+    if (!window.__themeSwapListener) {
+      window.__themeSwapListener = true;
+      document.addEventListener('astro:before-swap', (event) => apply(event.newDocument));
     }
-    document.documentElement.dataset.theme = theme;
   })();
 </script>

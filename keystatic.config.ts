@@ -1,4 +1,6 @@
 import { config, fields, collection, singleton } from '@keystatic/core';
+import { block } from '@keystatic/core/content-components';
+import { pipelineColourOptions } from './src/lib/pipeline';
 
 // Local storage in dev, GitHub storage in production.
 // Set PUBLIC_KEYSTATIC_STORAGE=github to use GitHub mode in dev (needed once, to create the GitHub App).
@@ -28,12 +30,40 @@ const altField = (label = 'Image description (alt text)') =>
     description: 'Describe the image for people using screen readers.',
   });
 
+// Content components insertable in rich text. Each one mirrors a tag in markdoc.config.mjs.
+const contentComponents = {
+  pipeline: block({
+    label: 'Pipeline diagram',
+    description: 'A self-drawing diagram of steps connected in order.',
+    schema: {
+      nodes: fields.array(
+        fields.object({
+          label: fields.text({
+            label: 'Label',
+            description: 'Keep it short: about 18 characters fits.',
+            validation: { length: { min: 1, max: 24 } },
+          }),
+          color: fields.select({ label: 'Colour', options: pipelineColourOptions, defaultValue: 'accent' }),
+        }),
+        {
+          label: 'Steps',
+          description: 'In order, left to right.',
+          itemLabel: (props) => props.fields.label.value,
+          validation: { length: { min: 2 } },
+        },
+      ),
+      caption: fields.text({ label: 'Caption', description: 'Optional.' }),
+    },
+  }),
+};
+
 const richText = (dir: string) =>
   fields.markdoc({
     label: 'Content',
     options: {
       image: { directory: `src/assets/${dir}`, publicPath: `../../assets/${dir}/` },
     },
+    components: contentComponents,
   });
 
 const tagsField = fields.array(fields.text({ label: 'Tag' }), {

@@ -1,0 +1,220 @@
+---
+// Full-bleed WebGL "liquid" behind the homepage hero: layered sine distortion with cosine-palette colour,
+// tinted to the theme's accent, plus a soft highlight that follows the cursor with eased lag.
+// Raw WebGL, one fullscreen triangle. The static CSS gradient underneath is the fallback
+// (reduced motion, no WebGL, no JS), and stays visible until the first frame renders.
+---
+
+<div class="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
+  <div class="hero-backdrop absolute inset-0"></div>
+  <canvas data-liquid-hero class="absolute inset-0 h-full w-full opacity-0 transition-opacity duration-1000"></canvas>
+  <!-- Keeps the hero text readable over the moving colour. -->
+  <div class="absolute inset-0 bg-linear-to-r from-bg/90 via-bg/60 to-bg/10 md:from-bg/85 md:via-bg/40 md:to-transparent"></div>
+</div>
+
+<style>
+  .hero-backdrop {
+    background:
+      radial-gradient(60% 80% at 85% 20%, color-mix(in oklab, var(--accent) 22%, transparent), transparent 70%),
+      radial-gradient(50% 60% at 10% 90%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 70%),
+      var(--bg);
+  }
+</style>
+
+<script>
+  import { onPageLoad, prefersReducedMotion, whenIdle } from '../../lib/lifecycle';
+
+  const VERTEX = `
+    attribute vec2 position;
+    void main() { gl_Position = vec4(position, 0.0, 1.0); }
+  `;
+
+  const FRAGMENT = `
+    precision mediump float;
+    uniform vec2 u_resolution;
+    uniform float u_time;
+    uniform vec2 u_mouse;
+    uniform vec3 u_accent;
+    uniform vec3 u_bg;
+
+    // Cosine palette centred on the accent colour.
+    vec3 palette(float t) {
+      return u_accent + vec3(0.22) * cos(6.28318 * (t + vec3(0.0, 0.12, 0.25)));
+    }
+
+    void main() {
+      vec2 uv = gl_FragCoord.xy / u_resolution;
+      float aspect = u_resolution.x / u_resolution.y;
+      vec2 p = (uv - 0.5) * vec2(aspect, 1.0) * 3.0;
+      float t = u_time * 0.12;
+
+      for (int i = 1; i < 6; i++) {
+        float fi = float(i);
+        p.x += 0.55 / fi * sin(fi * p.y + t * 1.7 + 0.3 * fi);
+        p.y += 0.55 / fi * cos(fi * p.x + t * 1.3 + 0.7 * fi);
+      }
+
+      float v = 0.5 + 0.5 * sin(p.x + p.y);
+      vec3 colour = clamp(palette(v + t * 0.4), 0.0, 1.0);
+
+      vec2 m = (u_mouse - uv) * vec2(aspect, 1.0);
+      float glow = exp(-dot(m, m) * 6.0);
+      colour = clamp(colour + glow * 0.3, 0.0, 1.0);
+
+      gl_FragColor = vec4(mix(u_bg, colour, 0.5 + 0.2 * glow), 1.0);
+    }
+  `;
+
+  const MOUSE_LERP = 0.06;
+  const MAX_DPR = 1.5;
+
+  function hexToRgb(value: string): [number, number, number] {
+    let hex = value.trim().replace('#', '');
+    if (hex.length === 3) hex = [...hex].map((c) => c + c).join('');
+    const n = Number.parseInt(hex, 16);
+    if (Number.isNaN(n) || hex.length !== 6) return [0.4, 0.4, 0.9];
+    return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+  }
+
+  function compile(gl: WebGLRenderingContext, type: number, source: string) {
+    const shader = gl.createShader(type)!;
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      throw new Error(gl.getShaderInfoLog(shader) ?? 'Shader failed to compile');
+    }
+    return shader;
+  }
+
+  onPageLoad(() => {
+    const canvas = document.querySelector<HTMLCanvasElement>('[data-liquid-hero]');
+    if (!canvas || prefersReducedMotion()) return;
+
+    // Compiling shaders blocks the main thread, so wait until the page is idle.
+    // The CSS gradient shows until then.
+    let stop: (() => void) | undefined;
+    let cancelled = false;
+    whenIdle().then(() => {
+      if (!cancelled) stop = start(canvas);
+    });
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
+  });
+
+  function start(canvas: HTMLCanvasElement): (() => void) | undefined {
+    const gl = canvas.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'low-power' });
+    if (!gl) return;
+
+    let program: WebGLProgram;
+    try {
+      program = gl.createProgram()!;
+      gl.attachShader(program, compile(gl, gl.VERTEX_SHADER, VERTEX));
+      gl.attachShader(program, compile(gl, gl.FRAGMENT_SHADER, FRAGMENT));
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error('Shader program failed to link');
+    } catch (error) {
+      console.warn('LiquidShaderHero: falling back to the static gradient.', error);
+      return;
+    }
+    gl.useProgram(program);
+
+    // One triangle that covers the whole viewport.
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const position = gl.getAttribLocation(program, 'position');
+    gl.enableVertexAttribArray(position);
+    gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+
+    const u = {
+      resolution: gl.getUniformLocation(program, 'u_resolution'),
+      time: gl.getUniformLocation(program, 'u_time'),
+      mouse: gl.getUniformLocation(program, 'u_mouse'),
+      accent: gl.getUniformLocation(program, 'u_accent'),
+      bg: gl.getUniformLocation(program, 'u_bg'),
+    };
+
+    const applyTheme = () => {
+      const styles = getComputedStyle(document.documentElement);
+      gl.uniform3fv(u.accent, hexToRgb(styles.getPropertyValue('--accent')));
+      gl.uniform3fv(u.bg, hexToRgb(styles.getPropertyValue('--bg')));
+    };
+    applyTheme();
+    const themeObserver = new MutationObserver(applyTheme);
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
+      canvas.width = Math.max(1, Math.round(canvas.clientWidth * dpr));
+      canvas.height = Math.max(1, Math.round(canvas.clientHeight * dpr));
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.uniform2f(u.resolution, canvas.width, canvas.height);
+    };
+    resize();
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(canvas);
+
+    // Mouse in canvas UV space (origin bottom-left), eased towards the pointer.
+    const mouse = { x: 0.7, y: 0.6 };
+    const target = { ...mouse };
+    const onPointerMove = (event: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      target.x = (event.clientX - rect.left) / rect.width;
+      target.y = 1 - (event.clientY - rect.top) / rect.height;
+    };
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+
+    // Only render while the hero is on screen and the tab is visible.
+    let frame = 0;
+    let onScreen = true;
+    let elapsed = 0;
+    let last = performance.now();
+    let firstFrame = true;
+
+    const render = (now: number) => {
+      elapsed += Math.min(now - last, 100) / 1000;
+      last = now;
+      mouse.x += (target.x - mouse.x) * MOUSE_LERP;
+      mouse.y += (target.y - mouse.y) * MOUSE_LERP;
+      gl.uniform1f(u.time, elapsed);
+      gl.uniform2f(u.mouse, mouse.x, mouse.y);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      if (firstFrame) {
+        firstFrame = false;
+        canvas.classList.remove('opacity-0');
+      }
+      frame = requestAnimationFrame(render);
+    };
+
+    const update = () => {
+      const shouldRun = onScreen && !document.hidden;
+      if (shouldRun && !frame) {
+        last = performance.now();
+        frame = requestAnimationFrame(render);
+      } else if (!shouldRun && frame) {
+        cancelAnimationFrame(frame);
+        frame = 0;
+      }
+    };
+
+    const visibilityObserver = new IntersectionObserver(([entry]) => {
+      onScreen = entry.isIntersecting;
+      update();
+    });
+    visibilityObserver.observe(canvas);
+    document.addEventListener('visibilitychange', update);
+    update();
+
+    return () => {
+      cancelAnimationFrame(frame);
+      frame = 0;
+      visibilityObserver.disconnect();
+      resizeObserver.disconnect();
+      themeObserver.disconnect();
+      document.removeEventListener('visibilitychange', update);
+      window.removeEventListener('pointermove', onPointerMove);
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
+    };
+  }
+</script>

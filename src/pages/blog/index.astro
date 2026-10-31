@@ -13,8 +13,8 @@ const posts = await getPosts();
   <PageHeader title="Blog" lead={settings.blogIntro} />
   <div class="container-page pb-24">
     <FilterBar tags={uniqueTags(posts)} />
-    <div data-filter-list class="border-b border-border">
-      {posts.map((post) => <PostCard post={post} />)}
+    <div data-filter-list class="border-b border-border" data-reveal>
+      {posts.map((post) => <PostCard post={post} headingLevel={2} />)}
     </div>
     {posts.length === 0 && <p class="text-muted">No posts yet.</p>}
   </div>

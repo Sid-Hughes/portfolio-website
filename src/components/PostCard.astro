@@ -4,9 +4,12 @@ import { formatDate, readingTime, type Post } from '../lib/content';
 
 interface Props {
   post: Post;
+  /** Heading level for the title: h2 on list pages, h3 under a section heading. */
+  headingLevel?: 2 | 3;
 }
 
-const { post } = Astro.props;
+const { post, headingLevel = 3 } = Astro.props;
+const Heading = `h${headingLevel}` as const;
 const { title, excerpt, publishedDate, tags, draft } = post.data;
 ---
 
@@ -23,10 +26,10 @@ const { title, excerpt, publishedDate, tags, draft } = post.data;
     </span>
   </p>
   <div class="flex flex-col gap-2">
-    <h3 class="text-h3 font-semibold">
+    <Heading class="text-h3 font-semibold">
       <a href={`/blog/${post.id}`} class="after:absolute after:inset-0 group-hover:text-accent">{title}</a>
       {draft && <span class="ml-2 rounded-full bg-accent-soft px-2 py-0.5 align-middle font-sans text-xs font-medium text-accent">Draft</span>}
-    </h3>
+    </Heading>
     <p class="max-w-prose text-muted">{excerpt}</p>
     {tags.length > 0 && (
       <ul class="flex flex-wrap gap-2 pt-2" aria-label="Tags">

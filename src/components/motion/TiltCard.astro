@@ -1,0 +1,76 @@
+---
+// 3D tilt that follows the cursor. Children marked data-tilt-depth="<px>" float forward for parallax.
+// Fine pointers only; flat on touch and under reduced motion.
+import type { HTMLAttributes } from 'astro/types';
+
+type Props = HTMLAttributes<'div'>;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div class:list={['tilt-perspective', className]} {...rest}>
+  <div data-tilt class="tilt-card h-full">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .tilt-perspective {
+    perspective: 1000px;
+  }
+  .tilt-card {
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+  .tilt-card :global([data-tilt-depth]) {
+    transform-style: preserve-3d;
+  }
+</style>
+
+<script>
+  import { gsap } from '../../lib/gsap';
+  import { hasFinePointer, onPageLoad, prefersReducedMotion } from '../../lib/lifecycle';
+
+  const MAX_TILT = 12; // degrees
+
+  onPageLoad(() => {
+    if (prefersReducedMotion() || !hasFinePointer()) return;
+    const removers: (() => void)[] = [];
+
+    document.querySelectorAll<HTMLElement>('[data-tilt]').forEach((card) => {
+      const layers = [...card.querySelectorAll<HTMLElement>('[data-tilt-depth]')];
+      const rotateX = gsap.quickTo(card, 'rotationX', { duration: 0.5, ease: 'power3.out' });
+      const rotateY = gsap.quickTo(card, 'rotationY', { duration: 0.5, ease: 'power3.out' });
+
+      const enter = () => {
+        layers.forEach((layer) =>
+          gsap.to(layer, { z: Number(layer.dataset.tiltDepth), duration: 0.5, ease: 'power3.out' }),
+        );
+      };
+      const move = (event: PointerEvent) => {
+        const rect = card.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width - 0.5;
+        const y = (event.clientY - rect.top) / rect.height - 0.5;
+        rotateY(x * 2 * MAX_TILT);
+        rotateX(-y * 2 * MAX_TILT);
+      };
+      const leave = () => {
+        gsap.to(card, { rotationX: 0, rotationY: 0, duration: 0.8, ease: 'power3.out', overwrite: true });
+        gsap.to(layers, { z: 0, duration: 0.8, ease: 'power3.out' });
+      };
+
+      card.addEventListener('pointerenter', enter);
+      card.addEventListener('pointermove', move);
+      card.addEventListener('pointerleave', leave);
+      removers.push(() => {
+        card.removeEventListener('pointerenter', enter);
+        card.removeEventListener('pointermove', move);
+        card.removeEventListener('pointerleave', leave);
+        gsap.killTweensOf([card, ...layers]);
+        gsap.set([card, ...layers], { clearProps: 'transform' });
+      });
+    });
+
+    return () => removers.forEach((remove) => remove());
+  });
+</script>

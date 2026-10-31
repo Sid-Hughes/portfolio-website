@@ -44,3 +44,17 @@ Choices not covered by the plan, with a one-line reason each.
 - **Fluid type scale with `clamp()`.** One scale that works from 360px phones to desktop without breakpoints.
 - **Whole-card click targets.** The card title's link stretches over the card, so the full card is clickable while keeping a single link per card for screen readers.
 - **The hero has a static radial-gradient backdrop in the accent colour.** Looks finished without animation and doubles as the shader hero's fallback in Phase 4.
+
+## Motion
+- **Shared page lifecycle (`src/lib/lifecycle.ts`).** With View Transitions, scripts run once but pages swap in place. Every component inits on `astro:page-load` and returns a cleanup that runs on `astro:before-swap` (GSAP contexts reverted, listeners removed, the WebGL context released), so nothing leaks or duplicates across navigations.
+- **Each component inits in its own task.** One combined init produced ~350ms of blocking time on a throttled mobile run; separate tasks brought it to ~0ms.
+- **The shader starts when the browser is idle.** Compiling shaders blocks the main thread; the CSS gradient fallback shows until the first frame, then the canvas fades in.
+- **The shader reads `--accent` and `--bg` from CSS and re-reads them on theme change.** It follows the palette in `tokens.css` and both themes with no separate config.
+- **Lenis is created once and survives navigations.** The window persists across swaps; its `html.lenis*` classes are carried over to each new page.
+- **Reduced motion: Lenis, the shader, reveals, word fill, the pinned strip, the scale-up cover, count-up, tilt, magnetic pull and the diagram animation are all off.** Content shows in its final state. The reading-progress bar still tracks (without smoothing), since it conveys position rather than decoration.
+- **`TiltCard` is applied inside `ProjectCard`.** Every project card tilts the same way; the card drops `overflow: hidden` (which flattens 3D) and the cover clips itself.
+- **The pinned strip adds an "All projects" end card.** It gives the sideways scroll somewhere to land, and makes the strip long enough to pin with only two featured projects.
+- **PipelineDiagram renders both layouts and CSS picks one.** Horizontal from 768px, vertical below; the diagram animates whichever is visible, and the static SVG is the fallback.
+- **WordFill keeps the plan's 15% starting opacity.** Lighthouse flags those faded words for contrast (home accessibility 95 rather than 100). Screen readers get a plain copy of the sentence, so only the visual effect is affected.
+- **No `SubmitButton` (no contact form) and no easter egg.** The form was dropped in favour of social links; the easter egg was optional.
+- **`lenis/dist/lenis.css` imported.** Lenis's recommended base styles (stopped state, nested scroll containers).

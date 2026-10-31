@@ -1,5 +1,6 @@
 ---
 import ThemeToggle from './ThemeToggle.astro';
+import TextRollLink from './motion/TextRollLink.astro';
 
 interface Props {
   siteTitle: string;
@@ -19,13 +20,12 @@ const isCurrent = (href: string) =>
       <ul class="flex items-center gap-1 sm:gap-2">
         {links.map((link) => (
           <li>
-            <a
+            <TextRollLink
               href={link.href}
+              label={link.label}
               aria-current={isCurrent(link.href) ? 'page' : undefined}
-              class="rounded-full px-2 py-2 text-sm text-muted hover:text-fg aria-[current=page]:text-fg aria-[current=page]:underline aria-[current=page]:decoration-accent aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-8 sm:px-3"
-            >
-              {link.label}
-            </a>
+              class="nav-link relative block px-2 py-2 text-sm text-muted hover:text-fg aria-[current=page]:text-fg sm:px-3"
+            />
           </li>
         ))}
       </ul>
@@ -33,3 +33,39 @@ const isCurrent = (href: string) =>
     </div>
   </nav>
 </header>
+
+<style>
+  /* Animated underline: grows from the left on hover, stays full on the current page. */
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.25rem;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.35s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  .nav-link:hover::after,
+  .nav-link:focus-visible::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+  .nav-link[aria-current='page']::after {
+    transform: scaleX(1);
+  }
+  @media (max-width: 639px) {
+    .nav-link::after {
+      left: 0.5rem;
+      right: 0.5rem;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .nav-link::after {
+      transition: none;
+    }
+  }
+</style>

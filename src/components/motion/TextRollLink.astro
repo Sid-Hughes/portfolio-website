@@ -1,0 +1,48 @@
+---
+// Nav link whose label rolls up on hover while an identical copy rolls in from below.
+import type { HTMLAttributes } from 'astro/types';
+
+interface Props extends HTMLAttributes<'a'> {
+  href: string;
+  label: string;
+}
+
+const { href, label, class: className, ...rest } = Astro.props;
+---
+
+<a href={href} class:list={['roll-link', className]} {...rest}>
+  <span class="roll-clip">
+    <span class="roll-track">
+      <span>{label}</span>
+      <span aria-hidden="true">{label}</span>
+    </span>
+  </span>
+</a>
+
+<style>
+  .roll-clip {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: top;
+    height: 1.5em;
+    line-height: 1.5em;
+  }
+  .roll-track {
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.45s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  .roll-link:hover .roll-track,
+  .roll-link:focus-visible .roll-track {
+    transform: translateY(-50%);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .roll-track {
+      transition: none;
+    }
+    .roll-link:hover .roll-track,
+    .roll-link:focus-visible .roll-track {
+      transform: none;
+    }
+  }
+</style>
