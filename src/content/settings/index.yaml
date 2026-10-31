@@ -1,0 +1,15 @@
+siteTitle: Sid Hughes
+tagline: >-
+  Placeholder tagline: I build things for the web and write about how they work.
+  Edit me in Keystatic under Site settings.
+description: >-
+  Placeholder description: portfolio and blog of Sid Hughes. Edit me in
+  Keystatic under Site settings.
+navLinks:
+  - label: Projects
+    href: /projects
+  - label: Blog
+    href: /blog
+  - label: About
+    href: /about
+footerText: © 2026 Sid Hughes. Placeholder footer text.

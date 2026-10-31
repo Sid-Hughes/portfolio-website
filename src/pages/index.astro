@@ -1,24 +1,46 @@
 ---
-import { getCollection } from 'astro:content';
-import '../styles/global.css';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import PostCard from '../components/PostCard.astro';
+import { getAbout, getPosts, getProjects, getSettings } from '../lib/content';
 
-const posts = await getCollection('posts');
+const settings = await getSettings();
+const about = await getAbout();
+const featured = (await getProjects()).filter((project) => project.data.featured);
+const latestPosts = (await getPosts()).slice(0, 3);
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width" />
-    <title>Portfolio</title>
-  </head>
-  <body class="mx-auto max-w-2xl p-6 font-sans">
-    <h1 class="text-3xl font-bold">Portfolio</h1>
-    <p class="mt-2 text-neutral-600">Phase 1 smoke test: posts below come from Keystatic.</p>
-    <ul class="mt-6 list-disc pl-6">
-      {posts.map((post) => (
-        <li><a class="underline" href={`/blog/${post.id}`}>{post.data.title}</a></li>
-      ))}
-    </ul>
-  </body>
-</html>
+<BaseLayout>
+  <section class="py-16">
+    <h1 class="text-4xl font-bold sm:text-5xl">{settings.siteTitle}</h1>
+    {settings.tagline && <p class="mt-4 max-w-2xl text-xl text-neutral-700">{settings.tagline}</p>}
+    <div class="mt-8 flex flex-wrap gap-4">
+      <a href="/projects" class="rounded bg-neutral-900 px-4 py-2 text-white">View my work</a>
+      <a href="/about#contact" class="rounded border border-neutral-300 px-4 py-2">Get in touch</a>
+    </div>
+  </section>
+
+  {featured.length > 0 && (
+    <section class="py-8" aria-labelledby="featured-heading">
+      <h2 id="featured-heading" class="mb-6 text-2xl font-semibold">Selected work</h2>
+      <div class="grid gap-6 sm:grid-cols-2">
+        {featured.map((project) => <ProjectCard project={project} />)}
+      </div>
+      <p class="mt-6"><a href="/projects" class="underline">All projects →</a></p>
+    </section>
+  )}
+
+  {latestPosts.length > 0 && (
+    <section class="py-8" aria-labelledby="posts-heading">
+      <h2 id="posts-heading" class="mb-2 text-2xl font-semibold">Latest writing</h2>
+      {latestPosts.map((post) => <PostCard post={post} />)}
+      <p class="mt-6"><a href="/blog" class="underline">All posts →</a></p>
+    </section>
+  )}
+
+  <section class="py-8" aria-labelledby="about-heading">
+    <h2 id="about-heading" class="mb-2 text-2xl font-semibold">About</h2>
+    <p class="max-w-2xl text-neutral-700">{about.data.shortBio}</p>
+    <p class="mt-4"><a href="/about" class="underline">More about me →</a></p>
+  </section>
+</BaseLayout>

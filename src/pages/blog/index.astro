@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import FilterBar from '../../components/FilterBar.astro';
+import { getPosts, uniqueTags } from '../../lib/content';
+
+const posts = await getPosts();
+---
+
+<BaseLayout title="Blog" description="Write-ups on things I'm building and learning.">
+  <h1 class="py-8 text-3xl font-bold">Blog</h1>
+  <div>
+    <FilterBar tags={uniqueTags(posts)} />
+    <div data-filter-list>
+      {posts.map((post) => <PostCard post={post} />)}
+    </div>
+  </div>
+  {posts.length === 0 && <p class="text-neutral-600">No posts yet.</p>}
+</BaseLayout>
