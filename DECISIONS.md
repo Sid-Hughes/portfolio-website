@@ -18,3 +18,19 @@ Choices not covered by the plan, with a one-line reason each.
 - **Content read through Astro content collections, not Keystatic's Reader API.** Follows Keystatic's Astro guide and gives typed, Zod-validated data.
 - **Keystatic storage chosen by env.** `local` in dev, `github` in production; `PUBLIC_KEYSTATIC_STORAGE=github` forces GitHub mode locally for the one-time GitHub App setup.
 - **Own GitHub App rather than Keystatic Cloud.** No extra third-party account; the app is created by Keystatic's built-in flow.
+- **`@astrojs/rss` for the feed.** Official Astro package; the plan requires `/rss.xml`.
+
+## Content model
+- **Alt text fields next to every image (`coverAlt`, `headshotAlt`).** Keystatic image fields have no alt text; required for project covers, and the Zod schema rejects an optional image without one.
+- **Project `stats` items have an optional `suffix`.** Lets values like "42%" or "10k+" stay numeric for the count-up animation.
+- **About has `name`, `role` and `shortBio` beyond the plan's fields.** The homepage blurb and page heading need them, and they shouldn't be hard-coded.
+- **Settings has a `description` field.** Used for meta descriptions and the RSS feed.
+- **Singletons stored at `src/content/about/index.mdoc` and `src/content/settings/index.yaml`.** Keystatic's singleton path format; read in Astro as one-entry collections.
+- **Images are stored under `src/assets/<collection>/<slug>/`.** Keystatic's default layout for image fields; keeps each entry's images together for Astro's `<Image />`.
+
+## Pages
+- **Filters are a small vanilla script, not a React island.** Cards are server-rendered with optimised images; the script only toggles visibility, so no framework JS ships. Without JS, all items show. Filter state is kept in the URL (`?tag=`, `?status=`) so tag links work.
+- **Reading time is computed from word count at 200 wpm.** Avoids a dependency for a one-line calculation.
+- **Table of contents shows h2/h3 and only when a post has at least two.** A one-item contents list adds nothing.
+- **Drafts show in dev (with a "Draft" badge) and are excluded from production builds, RSS and related-post lists.**
+- **"Get in touch" links to the social links section on `/about`.** There is no contact form.
