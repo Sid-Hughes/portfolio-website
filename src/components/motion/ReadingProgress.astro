@@ -1,0 +1,30 @@
+---
+// Thin accent bar fixed to the top of the page, tracking progress through the element marked data-reading-target.
+// Not shown without JS. Under reduced motion it still tracks, without smoothing.
+---
+
+<div data-reading-progress class="pointer-events-none fixed inset-x-0 top-0 z-50 h-[3px] origin-left scale-x-0 bg-accent" aria-hidden="true"></div>
+
+<script>
+  import { gsap } from '../../lib/gsap';
+  import { onPageLoad, prefersReducedMotion } from '../../lib/lifecycle';
+
+  onPageLoad(() => {
+    const bar = document.querySelector<HTMLElement>('[data-reading-progress]');
+    const target = document.querySelector<HTMLElement>('[data-reading-target]');
+    if (!bar || !target) return;
+    const ctx = gsap.context(() => {
+      gsap.to(bar, {
+        scaleX: 1,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: target,
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: prefersReducedMotion() ? true : 0.3,
+        },
+      });
+    });
+    return () => ctx.revert();
+  });
+</script>

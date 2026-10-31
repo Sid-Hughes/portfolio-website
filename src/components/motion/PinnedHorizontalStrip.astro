@@ -1,0 +1,90 @@
+---
+// Homepage "Selected work": the section pins and its cards scroll sideways as the page scrolls down.
+// Below 768px, under reduced motion, or without JS it is a native horizontal swipe row.
+import ProjectCard from '../ProjectCard.astro';
+import SectionHeading from '../SectionHeading.astro';
+import type { Project } from '../../lib/content';
+
+interface Props {
+  projects: Project[];
+}
+
+const { projects } = Astro.props;
+---
+
+<section data-strip class="section-space overflow-hidden border-t border-border" aria-labelledby="featured-heading">
+  <div class="container-page">
+    <SectionHeading id="featured-heading" eyebrow="Projects" title="Selected work" link={{ href: '/projects', label: 'All projects' }} />
+    <div data-strip-viewport class="strip-viewport">
+      <ul data-strip-track class="flex w-max gap-6">
+        {projects.map((project) => (
+          <li class="w-[min(85vw,34rem)] snap-start">
+            <ProjectCard project={project} class="h-full" />
+          </li>
+        ))}
+        <li class="w-[min(70vw,20rem)] snap-start">
+          <a
+            href="/projects"
+            class="group flex h-full min-h-60 flex-col justify-end rounded-card border border-dashed border-border p-6 text-muted hover:border-accent hover:text-fg"
+          >
+            <span class="font-display text-h3 font-semibold">All projects</span>
+            <span class="mt-2 inline-block text-2xl transition-transform group-hover:translate-x-1" aria-hidden="true">→</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Native swipe row by default. JS swaps this for the pinned scroll on wide screens. */
+  .strip-viewport {
+    margin-inline: calc(var(--gutter) * -1);
+    padding: 0.5rem var(--gutter) 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--gutter);
+    scrollbar-width: thin;
+  }
+  .strip-viewport.is-pinned {
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+</style>
+
+<script>
+  import { gsap } from '../../lib/gsap';
+  import { onPageLoad } from '../../lib/lifecycle';
+
+  onPageLoad(() => {
+    const section = document.querySelector<HTMLElement>('[data-strip]');
+    const viewport = section?.querySelector<HTMLElement>('[data-strip-viewport]');
+    const track = section?.querySelector<HTMLElement>('[data-strip-track]');
+    if (!section || !viewport || !track) return;
+
+    const mm = gsap.matchMedia();
+    mm.add('(min-width: 768px) and (prefers-reduced-motion: no-preference)', () => {
+      viewport.classList.add('is-pinned');
+      const distance = () => Math.max(0, track.scrollWidth - viewport.clientWidth);
+      if (distance() === 0) {
+        viewport.classList.remove('is-pinned');
+        return;
+      }
+      gsap.to(track, {
+        x: () => -distance(),
+        ease: 'none',
+        scrollTrigger: {
+          trigger: section,
+          start: 'top top',
+          end: () => `+=${distance()}`,
+          pin: true,
+          scrub: 1,
+          invalidateOnRefresh: true,
+        },
+      });
+      return () => viewport.classList.remove('is-pinned');
+    });
+
+    return () => mm.revert();
+  });
+</script>

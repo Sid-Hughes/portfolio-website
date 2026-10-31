@@ -1,0 +1,42 @@
+---
+// A line of text whose words fill from faint to full opacity, scrubbed to scroll position.
+// Static (fully visible) under reduced motion or without JS.
+interface Props {
+  text: string;
+  class?: string;
+}
+
+const { text, class: className } = Astro.props;
+---
+
+<p data-word-fill class={className}>{text}</p>
+
+<script>
+  import { gsap, SplitText } from '../../lib/gsap';
+  import { onPageLoad, prefersReducedMotion } from '../../lib/lifecycle';
+
+  onPageLoad(() => {
+    if (prefersReducedMotion()) return;
+    const ctx = gsap.context(() => {
+      document.querySelectorAll<HTMLElement>('[data-word-fill]').forEach((el) => {
+        // Split after fonts load so word boundaries match the final layout.
+        SplitText.create(el, {
+          type: 'words',
+          autoSplit: true,
+          onSplit: (self) =>
+            gsap.fromTo(
+              self.words,
+              { opacity: 0.15 },
+              {
+                opacity: 1,
+                ease: 'none',
+                stagger: 0.1,
+                scrollTrigger: { trigger: el, start: 'top 85%', end: 'bottom 45%', scrub: true },
+              },
+            ),
+        });
+      });
+    });
+    return () => ctx.revert();
+  });
+</script>

@@ -1,0 +1,38 @@
+---
+// Project cover that scales from ~0.6 to 1 while its corner radius shrinks, as it scrolls into view.
+// Full size under reduced motion or without JS.
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<div data-scale-cover class:list={['overflow-hidden rounded-card border border-border', className]}>
+  <slot />
+</div>
+
+<script>
+  import { gsap } from '../../lib/gsap';
+  import { onPageLoad, prefersReducedMotion } from '../../lib/lifecycle';
+
+  onPageLoad(() => {
+    if (prefersReducedMotion()) return;
+    const ctx = gsap.context(() => {
+      document.querySelectorAll<HTMLElement>('[data-scale-cover]').forEach((el) => {
+        const endRadius = getComputedStyle(el).borderTopLeftRadius;
+        gsap.fromTo(
+          el,
+          { scale: 0.6, borderRadius: '4rem' },
+          {
+            scale: 1,
+            borderRadius: endRadius,
+            ease: 'none',
+            scrollTrigger: { trigger: el, start: 'top bottom', end: 'top 20%', scrub: true },
+          },
+        );
+      });
+    });
+    return () => ctx.revert();
+  });
+</script>

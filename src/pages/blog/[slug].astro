@@ -6,6 +6,8 @@ import ProjectCard from '../../components/ProjectCard.astro';
 import Prose from '../../components/Prose.astro';
 import Tag from '../../components/Tag.astro';
 import SectionHeading from '../../components/SectionHeading.astro';
+import ArrowLink from '../../components/motion/ArrowLink.astro';
+import ReadingProgress from '../../components/motion/ReadingProgress.astro';
 import { formatDate, getPosts, readingTime, type Post } from '../../lib/content';
 
 export async function getStaticPaths() {
@@ -22,10 +24,11 @@ const showToc = toc.length > 1;
 ---
 
 <BaseLayout title={title} description={excerpt}>
-  <article>
+  <ReadingProgress />
+  <article data-reading-target>
     <header class="container-page pt-16 pb-10 sm:pt-24">
       <div class="mx-auto max-w-3xl">
-        <a href="/blog" class="text-sm text-muted hover:text-fg"><span aria-hidden="true">←</span> All posts</a>
+        <ArrowLink href="/blog" direction="back" class="text-sm text-muted hover:text-fg">All posts</ArrowLink>
         <p class="mt-8 text-sm text-muted">
           <time datetime={publishedDate.toISOString()}>{formatDate(publishedDate)}</time>
           <span aria-hidden="true"> · </span>{readingTime(post.body)}
@@ -77,7 +80,7 @@ const showToc = toc.length > 1;
     <section class="section-space border-t border-border" aria-labelledby="related-projects">
       <div class="container-page">
         <SectionHeading id="related-projects" eyebrow="Projects" title="Related projects" />
-        <div class="grid gap-6 md:grid-cols-2">
+        <div class="grid gap-6 md:grid-cols-2" data-reveal>
           {projects.map((project) => <ProjectCard project={project} />)}
         </div>
       </div>

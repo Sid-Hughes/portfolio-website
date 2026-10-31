@@ -41,7 +41,7 @@ const { Content } = await render(about);
     <section class="section-space border-t border-border" aria-labelledby="skills-heading">
       <div class="container-page">
         <SectionHeading id="skills-heading" title="Skills" />
-        <ul class="flex flex-wrap gap-3">
+        <ul class="flex flex-wrap gap-3" data-reveal>
           {skills.map((skill) => <li class="rounded-full border border-border bg-surface px-4 py-2">{skill}</li>)}
         </ul>
       </div>
@@ -52,7 +52,7 @@ const { Content } = await render(about);
     <section id="contact" class="section-space scroll-mt-16 border-t border-border" aria-labelledby="contact-heading">
       <div class="container-page">
         <SectionHeading id="contact-heading" title="Get in touch" />
-        <ul class="flex flex-wrap gap-3">
+        <ul class="flex flex-wrap gap-3" data-reveal>
           {socials.map((social) => (
             <li>
               <Button href={social.url} variant="secondary" rel="me noopener">
