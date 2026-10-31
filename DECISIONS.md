@@ -4,6 +4,7 @@ Choices not covered by the plan, with a one-line reason each.
 
 ## Repo and workflow
 - **GitHub Flow with milestone branches, merge commits only.** PRs are phase-sized, so merge commits keep the granular history on `main`; `git log --first-parent` gives the per-PR view.
+- **CMS edits go through PRs on `content/*` branches.** Agreed with Sid. Keystatic will not commit to a branch that requires PRs (an app bypass doesn't change that), and keeping `main` fully locked was preferred over direct saves; content PRs also get Vercel previews.
 - **`.gitattributes` normalises line endings to LF.** The repo is developed on Windows; avoids CRLF churn in diffs.
 
 ## Scope

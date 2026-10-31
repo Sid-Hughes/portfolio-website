@@ -45,9 +45,18 @@ In production Keystatic runs in **GitHub mode**: editors sign in with GitHub and
    - `KEYSTATIC_SECRET`
    - `PUBLIC_KEYSTATIC_GITHUB_APP_SLUG`
 5. In Vercel → Project → Settings → Environment Variables, add those four (not `PUBLIC_KEYSTATIC_STORAGE`), then redeploy.
-6. In the GitHub App's settings (GitHub → Settings → Developer settings → GitHub Apps), add a callback URL: `https://<your-vercel-domain>/api/keystatic/github/oauth/callback`.
+6. In the GitHub App's settings (GitHub → Settings → Developer settings → GitHub Apps → Edit), check the **Redirect URLs** include `https://<your-production-domain>/api/keystatic/github/oauth/callback`. Keystatic usually adds it during setup.
 7. Remove `PUBLIC_KEYSTATIC_STORAGE` from your local `.env` to go back to local mode. Never commit `.env`.
 
-### 3. Let the CMS write to `main`
+If you add a custom domain later, add a second redirect URL for it; the existing app and env vars stay the same.
 
-`main` only accepts pull requests, so Keystatic's saves will be rejected until it is allowed through. In GitHub → Settings → Rules → `protect-main` → **Bypass list**, add the Keystatic GitHub App created above.
+## Adding content in production
+
+Use the CMS at the **production domain** (`https://portfolio-website-six-gilt-38.vercel.app/keystatic`, or the custom domain once added). Per-deployment and PR preview URLs change on every deploy, so GitHub sign-in is not registered for them and fails with a `redirect_uri` error.
+
+`main` only accepts pull requests, and that applies to CMS edits too:
+
+1. In Keystatic, open the branch menu and create a branch. Keystatic prefixes it with `content/` (e.g. `content/new-post`).
+2. Write and save on that branch. Each save is a commit to the branch.
+3. Click **Create pull request** in Keystatic. Vercel builds a preview of the site with your change.
+4. Check the preview, then merge the PR on GitHub. The production site redeploys with the change, and the branch is deleted automatically.
