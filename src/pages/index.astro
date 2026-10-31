@@ -1,0 +1,24 @@
+---
+import { getCollection } from 'astro:content';
+import '../styles/global.css';
+
+const posts = await getCollection('posts');
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Portfolio</title>
+  </head>
+  <body class="mx-auto max-w-2xl p-6 font-sans">
+    <h1 class="text-3xl font-bold">Portfolio</h1>
+    <p class="mt-2 text-neutral-600">Phase 1 smoke test: posts below come from Keystatic.</p>
+    <ul class="mt-6 list-disc pl-6">
+      {posts.map((post) => (
+        <li><a class="underline" href={`/blog/${post.id}`}>{post.data.title}</a></li>
+      ))}
+    </ul>
+  </body>
+</html>
