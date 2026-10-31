@@ -1,0 +1,176 @@
+---
+// Self-drawing pipeline diagram, insertable from the CMS as a Markdoc `{% pipeline %}` tag.
+// On scroll into view: nodes pop in one by one, each connector draws after its source node,
+// then dashed "data packets" flow along every connector on a loop. A Replay button resets and replays.
+// Horizontal from 768px, vertical below. The complete static diagram shows under reduced motion or without JS.
+import { pipelineColours, type PipelineColour } from '../../lib/pipeline';
+
+interface Props {
+  nodes: { label: string; color?: string }[];
+  caption?: string;
+}
+
+const { nodes = [], caption } = Astro.props;
+const strokeFor = (color?: string) =>
+  (pipelineColours[color as PipelineColour] ?? pipelineColours.accent).stroke;
+
+const PAD = 8;
+
+// Horizontal layout
+const H = { w: 150, h: 56, gap: 56 };
+const hWidth = nodes.length * H.w + Math.max(0, nodes.length - 1) * H.gap + PAD * 2;
+const hHeight = H.h + PAD * 2;
+const hNodes = nodes.map((node, i) => ({ ...node, x: PAD + i * (H.w + H.gap), y: PAD, w: H.w, h: H.h }));
+const hLinks = hNodes.slice(0, -1).map((node) => {
+  const y = node.y + node.h / 2;
+  return `M ${node.x + node.w} ${y} H ${node.x + node.w + H.gap}`;
+});
+
+// Vertical layout
+const V = { w: 240, h: 52, gap: 40 };
+const vWidth = V.w + PAD * 2;
+const vHeight = nodes.length * V.h + Math.max(0, nodes.length - 1) * V.gap + PAD * 2;
+const vNodes = nodes.map((node, i) => ({ ...node, x: PAD, y: PAD + i * (V.h + V.gap), w: V.w, h: V.h }));
+const vLinks = vNodes.slice(0, -1).map((node) => {
+  const x = node.x + node.w / 2;
+  return `M ${x} ${node.y + node.h} V ${node.y + node.h + V.gap}`;
+});
+
+const layouts = [
+  { name: 'horizontal', cls: 'hidden md:block', width: hWidth, height: hHeight, nodes: hNodes, links: hLinks },
+  { name: 'vertical', cls: 'md:hidden', width: vWidth, height: vHeight, nodes: vNodes, links: vLinks },
+];
+
+const description = `Diagram: ${nodes.map((node) => node.label).join(' → ')}`;
+---
+
+{nodes.length > 0 && (
+  <figure data-pipeline class="my-10 rounded-card border border-border bg-surface p-6">
+    {layouts.map((layout) => (
+      <svg
+        data-pipeline-svg={layout.name}
+        class:list={[layout.cls, 'mx-auto h-auto w-full']}
+        style={`max-width: ${layout.width}px`}
+        viewBox={`0 0 ${layout.width} ${layout.height}`}
+        role="img"
+        aria-label={description}
+      >
+        {layout.links.map((d) => (
+          <g>
+            <path data-connector d={d} fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" />
+            <path data-packet d={d} fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-dasharray="4 16" style="opacity: 0" />
+          </g>
+        ))}
+        {layout.nodes.map((node) => (
+          <g data-node>
+            <rect
+              x={node.x}
+              y={node.y}
+              width={node.w}
+              height={node.h}
+              rx="12"
+              stroke-width="2"
+              style={`stroke: ${strokeFor(node.color)}; fill: color-mix(in oklab, ${strokeFor(node.color)} 14%, var(--surface))`}
+            />
+            <text
+              x={node.x + node.w / 2}
+              y={node.y + node.h / 2}
+              text-anchor="middle"
+              dominant-baseline="central"
+              font-size="14"
+              font-weight="500"
+              style="fill: var(--fg); font-family: var(--font-sans)"
+            >
+              {node.label}
+            </text>
+          </g>
+        ))}
+      </svg>
+    ))}
+    <figcaption class="mt-4 flex items-center justify-between gap-4 text-sm text-muted">
+      <span>{caption}</span>
+      <button type="button" data-pipeline-replay hidden class="rounded-full border border-border px-3 py-1 hover:border-fg hover:text-fg">
+        Replay<span class="sr-only"> diagram animation</span>
+      </button>
+    </figcaption>
+  </figure>
+)}
+
+<script>
+  import { gsap, ScrollTrigger } from '../../lib/gsap';
+  import { onPageLoad, prefersReducedMotion } from '../../lib/lifecycle';
+
+  onPageLoad(() => {
+    if (prefersReducedMotion()) return;
+    const removers: (() => void)[] = [];
+    const ctx = gsap.context(() => {});
+
+    document.querySelectorAll<HTMLElement>('[data-pipeline]').forEach((figure) => {
+      const replay = figure.querySelector<HTMLButtonElement>('[data-pipeline-replay]');
+      let timeline: gsap.core.Timeline | null = null;
+      let packets: gsap.core.Tween[] = [];
+
+      const visibleSvg = () =>
+        [...figure.querySelectorAll<SVGSVGElement>('[data-pipeline-svg]')].find(
+          (svg) => getComputedStyle(svg).display !== 'none',
+        );
+
+      const stop = () => {
+        timeline?.kill();
+        timeline = null;
+        packets.forEach((tween) => tween.kill());
+        packets = [];
+      };
+
+      // Cancel anything running, put every part back to its start state, then build the sequence.
+      const play = () =>
+        ctx.add(() => {
+          stop();
+          const svg = visibleSvg();
+          if (!svg) return;
+          const nodes = [...svg.querySelectorAll<SVGGElement>('[data-node]')];
+          const connectors = [...svg.querySelectorAll<SVGPathElement>('[data-connector]')];
+          const packetPaths = [...svg.querySelectorAll<SVGPathElement>('[data-packet]')];
+
+          gsap.set(nodes, { scale: 0.7, opacity: 0, transformOrigin: '50% 50%' });
+          connectors.forEach((path) => {
+            const length = path.getTotalLength();
+            gsap.set(path, { strokeDasharray: length, strokeDashoffset: length });
+          });
+          gsap.set(packetPaths, { opacity: 0 });
+
+          timeline = gsap.timeline();
+          nodes.forEach((node, i) => {
+            timeline!.to(node, { scale: 1, opacity: 1, duration: 0.45, ease: 'back.out(2.2)' });
+            if (connectors[i]) {
+              timeline!.to(connectors[i], { strokeDashoffset: 0, duration: 0.4, ease: 'power2.inOut' });
+            }
+          });
+          timeline.add(() =>
+            ctx.add(() => {
+              packets = packetPaths.map((path) => {
+                gsap.set(path, { opacity: 1 });
+                return gsap.fromTo(path, { strokeDashoffset: 20 }, { strokeDashoffset: 0, duration: 0.6, ease: 'none', repeat: -1 });
+              });
+            }),
+          );
+        });
+
+      ctx.add(() => {
+        ScrollTrigger.create({ trigger: figure, start: 'top 80%', once: true, onEnter: play });
+      });
+
+      if (replay) {
+        replay.hidden = false;
+        replay.addEventListener('click', play);
+        removers.push(() => replay.removeEventListener('click', play));
+      }
+      removers.push(stop);
+    });
+
+    return () => {
+      removers.forEach((remove) => remove());
+      ctx.revert();
+    };
+  });
+</script>
