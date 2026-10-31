@@ -3,6 +3,7 @@ import { ClientRouter } from 'astro:transitions';
 import { getAbout, getSettings } from '../lib/content';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
+import Seo from '../components/Seo.astro';
 import ThemeScript from '../components/ThemeScript.astro';
 import SmoothScroll from '../components/motion/SmoothScroll.astro';
 import RevealStagger from '../components/motion/RevealStagger.astro';
@@ -11,11 +12,21 @@ import '../styles/global.css';
 interface Props {
   title?: string;
   description?: string;
+  /** Open Graph image path; defaults to the site card. */
+  ogImage?: string;
+  type?: 'website' | 'article';
+  publishedTime?: Date;
 }
 
 const settings = await getSettings();
 const about = await getAbout();
-const { title, description = settings.description ?? undefined } = Astro.props;
+const {
+  title,
+  description = settings.description ?? undefined,
+  ogImage = '/og/site.png',
+  type,
+  publishedTime,
+} = Astro.props;
 const pageTitle = title ? `${title} | ${settings.siteTitle}` : settings.siteTitle;
 ---
 
@@ -27,8 +38,16 @@ const pageTitle = title ? `${title} | ${settings.siteTitle}` : settings.siteTitl
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate" type="application/rss+xml" title={settings.siteTitle} href="/rss.xml" />
-    <title>{pageTitle}</title>
-    {description && <meta name="description" content={description} />}
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <Seo
+      title={pageTitle}
+      siteTitle={settings.siteTitle}
+      description={description}
+      image={ogImage}
+      imageAlt={pageTitle}
+      type={type}
+      publishedTime={publishedTime}
+    />
     <ClientRouter />
   </head>
   <body class="flex min-h-screen flex-col">
