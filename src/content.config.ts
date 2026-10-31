@@ -79,6 +79,8 @@ const settings = defineCollection({
     tagline: optionalText,
     description: optionalText,
     navLinks: z.array(z.object({ label: z.string(), href: z.string() })).default([]),
+    projectsIntro: optionalText,
+    blogIntro: optionalText,
     footerText: optionalText,
   }),
 });

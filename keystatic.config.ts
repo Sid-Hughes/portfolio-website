@@ -204,6 +204,16 @@ export default config({
           }),
           { label: 'Navigation links', itemLabel: (props) => props.fields.label.value },
         ),
+        projectsIntro: fields.text({
+          label: 'Projects page intro',
+          description: 'Optional line under the Projects heading.',
+          multiline: true,
+        }),
+        blogIntro: fields.text({
+          label: 'Blog page intro',
+          description: 'Optional line under the Blog heading.',
+          multiline: true,
+        }),
         footerText: fields.text({ label: 'Footer text' }),
       },
     }),
