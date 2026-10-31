@@ -1,0 +1,25 @@
+---
+import { getCollection, render } from 'astro:content';
+import '../../styles/global.css';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts');
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{post.data.title}</title>
+  </head>
+  <body class="mx-auto max-w-2xl p-6 font-sans">
+    <a class="underline" href="/">← Home</a>
+    <h1 class="mt-4 text-3xl font-bold">{post.data.title}</h1>
+    <article class="mt-6"><Content /></article>
+  </body>
+</html>
