@@ -58,3 +58,10 @@ Choices not covered by the plan, with a one-line reason each.
 - **WordFill keeps the plan's 15% starting opacity.** Lighthouse flags those faded words for contrast (home accessibility 95 rather than 100). Screen readers get a plain copy of the sentence, so only the visual effect is affected.
 - **No `SubmitButton` (no contact form) and no easter egg.** The form was dropped in favour of social links; the easter egg was optional.
 - **`lenis/dist/lenis.css` imported.** Lenis's recommended base styles (stopped state, nested scroll containers).
+
+## Polish and launch
+- **Open Graph images rendered at build time with satori + sharp.** One PNG per page at `/og/...`; no runtime cost, no external service. Colours are read from `tokens.css`; fonts come from static Fontsource packages (`@fontsource/inter`, `@fontsource/space-grotesk`, dev-only) because satori can't read woff2.
+- **`sharp` added as a direct dependency.** Astro only lists it as optional, and the OG renderer imports it directly.
+- **`@astrojs/sitemap` for the sitemap; robots.txt generated from `site`.** Excludes the admin and API routes. Changing the domain is one line in `astro.config.mjs`.
+- **Vercel Web Analytics via the adapter's `webAnalytics` option.** No extra package; it needs enabling in the Vercel dashboard.
+- **Not applying `npm audit fix --force`.** Its "fixes" downgrade to old majors (e.g. `@astrojs/vercel@8`, `satori@0.32`). The advisories are in build-time tooling (`@vercel/nft`, routing utils, satori's zip handling) or Keystatic's glob matching behind GitHub auth; none processes visitor input on the static site. Re-check when upstream packages update.
